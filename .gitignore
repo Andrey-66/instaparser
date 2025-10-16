@@ -1,0 +1,52 @@
+# Файлы cookie Instagram
+/ig_cookies.json
+
+# profiles
+/profiles
+
+# Папки с загруженным контентом (все папки пользователей)
+/*/
+
+
+# Кэш Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Виртуальное окружение Python
+venv/
+env/
+ENV/
+.env
+
+# Папка IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Логи
+*.log
+
+# Временные файлы
+*.tmp
+*.temp
+
+# Файлы операционной системы
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Файлы конфигурации (если есть)
+*.cfg
+*.config
+
+# Резервные копии
+*.bak
+*.backup
+
+# Файлы данных
+*.db
+*.sqlite
+*.sqlite3
