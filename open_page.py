@@ -2,11 +2,14 @@ from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 
+from logger import logger
+
+
 def open_page(driver, url):
     driver.get(url)
     wait = WebDriverWait(driver, 60)
     wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
-    print(f"🔄 Страница {url} загружена")
+    logger.info(f"🔄 Страница {url} загружена")
 
 
 def reject_cookies(driver, max_wait=15):
@@ -21,7 +24,7 @@ def reject_cookies(driver, max_wait=15):
             try:
                 button = driver.find_element(By.XPATH, f"//button[text()='{text}']")
                 button.click()
-                print(f"✅ Кнопка cookie нажата: '{text}' ({context_desc})")
+                logger.info(f"✅ Кнопка cookie нажата: '{text}' ({context_desc})")
                 return True
             except NoSuchElementException:
                 continue
@@ -32,7 +35,7 @@ def reject_cookies(driver, max_wait=15):
         return
 
     # 4. Если не получилось — ищем в iframe
-    print("🔍 Ищем кнопку отклонения cookie в iframe...")
+    logger.info("🔍 Ищем кнопку отклонения cookie в iframe...")
     iframes = driver.find_elements(By.TAG_NAME, "iframe")
     for iframe in iframes:
         try:
@@ -45,4 +48,4 @@ def reject_cookies(driver, max_wait=15):
             driver.switch_to.default_content()
             continue
 
-    print("ℹ️ Кнопка отклонения cookie не найдена — ничего не нажато.")
+    logger.info("ℹ️ Кнопка отклонения cookie не найдена — ничего не нажато.")

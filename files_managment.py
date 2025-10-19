@@ -1,6 +1,8 @@
 import os
 import shutil
 
+from logger import logger
+
 
 def load_profiles(path="profiles"):
     """Читает файл с парами userprofile: telegramid. Возвращает список кортежей."""
@@ -34,9 +36,9 @@ def clean_and_check_user_dirs(username, expected_dirs, root="."):
             full_path = os.path.join(root, d)
             try:
                 shutil.rmtree(full_path)
-                print(f"🗑️ Удалена лишняя директория: {d}")
+                logger.info(f"🗑️ Удалена лишняя директория: {d}")
             except Exception as e:
-                print(f"❌ Не удалось удалить {d}: {e}")
+                logger.info(f"❌ Не удалось удалить {d}: {e}")
 
     missing = []
     for d in expected_dirs:

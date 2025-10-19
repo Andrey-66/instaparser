@@ -5,6 +5,7 @@ from telegram import InputMediaPhoto, InputMediaVideo
 
 from acces import restricted
 from insta_download import get_content
+from logger import logger
 
 PROFILES_FILE="profiles"
 
@@ -137,4 +138,4 @@ async def send_content(dir, telegram_id, bot, delete=True):
             if os.path.isdir(dir) and dir not in [".", "/"]:
                 shutil.rmtree(dir)
         except Exception as e:
-            print(e)
+            logger.error(e)

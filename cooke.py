@@ -3,6 +3,8 @@ import os
 import time
 from selenium import webdriver
 
+from logger import logger
+
 COOKIES_FILE = "ig_cookies.json"
 BASE_URL = "https://www.instagram.com/"
 
@@ -28,7 +30,7 @@ def load_cookies(driver, path=COOKIES_FILE):
         try:
             driver.add_cookie(normalize_cookie(c))
         except Exception as e:
-            print("warning: cookie not added:", e)
+            logger.warning("cookie not added:", e)
     driver.refresh()
     return True
 
@@ -42,23 +44,5 @@ def save_cookies(driver, path=COOKIES_FILE):
         os.chmod(path, 0o600)
     except Exception:
         pass
-    print(f"Saved {len(cookies)} cookies to {path}")
+    logger.info(f"Saved {len(cookies)} cookies to {path}")
 
-# --- Пример использования ---
-if __name__ == "__main__":
-    driver = webdriver.Chrome()
-    # Попытка восстановить сессию
-    loaded = load_cookies(driver)
-    if loaded:
-        print("Cookies загружены — проверяй, залогинен ли ты.")
-    else:
-        print("Файл cookies не найден — откроется страница входа.")
-
-    # Открываем страницу и даём шанс вручную залогиниться (если требуется)
-    driver.get(BASE_URL)
-    input("Если нужно — залогиньтесь вручную в открывшемся окне. Нажмите Enter в консоли, чтобы продолжить и сохранить cookies...")
-
-    # Сохраняем cookies в конце
-    save_cookies(driver)
-
-    driver.quit()

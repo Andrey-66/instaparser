@@ -8,6 +8,8 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from dotenv import load_dotenv
 
+from logger import logger
+
 
 def check_login(driver):
     try_num = 0
@@ -15,7 +17,7 @@ def check_login(driver):
     while try_num < 5:
         try:
             wait.until(EC.presence_of_element_located((By.NAME, "username")))
-            print("Нашёл страницу авторизации")
+            logger.info("Нашёл страницу авторизации")
             login(driver)
             return
         except NoSuchElementException:
@@ -35,4 +37,4 @@ def login(driver):
     login_input.send_keys(email)
     password_input = wait.until(EC.presence_of_element_located((By.NAME, "password")))
     password_input.send_keys(password + "\n")
-    sleep(5)
+    sleep(50)
