@@ -68,6 +68,8 @@ def insta_process(driver, bot, loop):
             try:
                 links = get_links(driver, username)
                 logger.debug(links)
+                if not links:
+                    continue
                 directories = get_directories_list(username, links)
                 to_download = clean_and_check_user_dirs(username, directories)
                 logger.info(f"Нужно скачать: {to_download}")
