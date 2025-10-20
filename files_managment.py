@@ -1,5 +1,6 @@
 import os
 import shutil
+from typing import Optional
 
 from logger import logger
 
@@ -58,3 +59,21 @@ def get_telegram_ids_by_username(username, filepath="profiles"):
             if len(parts) == 2 and parts[0].strip() == username:
                 ids.add(parts[1].strip())
     return list(ids)
+
+
+def folder_has_files(username: str, link: str, base_dir: Optional[str] = '.') -> bool:
+    """
+    Проверяет наличие папки `f\"{username}-{link}\"` в `base_dir` и что в ней есть хотя бы один файл.
+    Возвращает True, если папка существует и содержит хотя бы один файл (включая поддиректории).
+    """
+    folder_name = f"{username}-{link}"
+    path = os.path.join(base_dir, folder_name)
+
+    if not os.path.isdir(path):
+        return False
+
+    for _, _, files in os.walk(path):
+        if files:  # если есть любые файлы
+            return True
+
+    return False

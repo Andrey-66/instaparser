@@ -1,4 +1,5 @@
 import os
+import random
 from asyncio import run_coroutine_threadsafe
 from time import sleep
 
@@ -9,7 +10,8 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from bot import send_content
 from cooke import load_cookies, save_cookies
-from files_managment import load_profiles, get_directories_list, clean_and_check_user_dirs, get_telegram_ids_by_username
+from files_managment import load_profiles, get_directories_list, clean_and_check_user_dirs, \
+    get_telegram_ids_by_username, folder_has_files
 from insta_download import get_content
 from logger import logger
 from login import check_login
@@ -80,15 +82,19 @@ def insta_process(driver, bot, loop):
                 logger.error(f"Ошибка при обработке ссылок для {username}: {e}")
                 continue
             for link in to_download:
+                sleep(random.randint(1, 5) * 600)
                 try:
                     get_content(link, username)
                     telegram_ids = get_telegram_ids_by_username(username)
                     for telegram_id in telegram_ids:
                         try:
-                            run_coroutine_threadsafe(
-                                bot.send_message(chat_id=telegram_id, text=f"Пост от {username}"), loop)
-                            run_coroutine_threadsafe(
-                                send_content(f"{username}-{link}", telegram_id, bot, delete=False), loop)
+                            if not folder_has_files(username, link):
+                                run_coroutine_threadsafe(
+                                    bot.send_message(chat_id=telegram_id, text=f"Пост от {username}"), loop)
+                                run_coroutine_threadsafe(
+                                    send_content(f"{username}-{link}", telegram_id, bot, delete=False), loop)
+                            else:
+                                logger.warning(f"Не удалось скачать контент {username}-{link}")
                         except Exception as e:
                             logger.error(e)
                 except Exception as e:
@@ -99,4 +105,4 @@ def insta_process(driver, bot, loop):
         except Exception:
             logger.exception("Не удалось сохранить куки")
 
-        sleep(10 * 60)
+        sleep(random.randint(25, 35) * 60)
