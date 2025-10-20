@@ -88,7 +88,7 @@ def insta_process(driver, bot, loop):
                     telegram_ids = get_telegram_ids_by_username(username)
                     for telegram_id in telegram_ids:
                         try:
-                            if not folder_has_files(username, link):
+                            if folder_has_files(username, link):
                                 run_coroutine_threadsafe(
                                     bot.send_message(chat_id=telegram_id, text=f"Пост от {username}"), loop)
                                 run_coroutine_threadsafe(
