@@ -82,7 +82,9 @@ def insta_process(driver, bot, loop):
                 logger.error(f"Ошибка при обработке ссылок для {username}: {e}")
                 continue
             for link in to_download:
-                sleep(random.randint(1, 5) * 600)
+                sleep_minutes = random.randint(1, 5)
+                logger.info(f"Спим {sleep_minutes} минут перед скачиванием {link}")
+                sleep(sleep_minutes * 60)
                 try:
                     get_content(link, username)
                     telegram_ids = get_telegram_ids_by_username(username)
@@ -105,4 +107,6 @@ def insta_process(driver, bot, loop):
         except Exception:
             logger.exception("Не удалось сохранить куки")
 
-        sleep(random.randint(25, 35) * 60)
+        sleep_minutes = random.randint(5, 10)
+        logger.info(f"Спим {sleep_minutes} минут перед следующей итерацией")
+        sleep(sleep_minutes * 60)
