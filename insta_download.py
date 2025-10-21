@@ -1,8 +1,15 @@
+import os
 import instaloader
+from dotenv import load_dotenv
 
 from logger import logger
 
+
+load_dotenv()
 L = instaloader.Instaloader()
+EMAIL = os.getenv("EMAIL")
+PASSWORD = os.getenv("PASSWORD")
+L.login(EMAIL, PASSWORD)
 
 def get_content(shortcode, username=None):
     logger.info(f"Обработка ссылки {shortcode}")
