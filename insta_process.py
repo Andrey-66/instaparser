@@ -82,7 +82,7 @@ def insta_process(driver, bot, loop):
                 logger.error(f"Ошибка при обработке ссылок для {username}: {e}")
                 continue
             for link in to_download:
-                sleep_minutes = random.randint(1, 1)
+                sleep_minutes = random.randint(1, 5)
                 logger.info(f"Спим {sleep_minutes} минут перед скачиванием {link}")
                 sleep(sleep_minutes * 60)
                 try:
