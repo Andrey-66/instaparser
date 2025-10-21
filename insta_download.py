@@ -1,24 +1,27 @@
 import os
+from pathlib import Path
+
 import instaloader
 from dotenv import load_dotenv
+from instaloader import Post, Profile
 
 from logger import logger
 
 
 load_dotenv()
 L = instaloader.Instaloader()
-EMAIL = os.getenv("EMAIL")
-PASSWORD = os.getenv("PASSWORD")
-L.login(EMAIL, PASSWORD)
+PROJECT_ROOT = Path(__file__).resolve().parent
+L.load_session_from_file("valtyry.2016", str(PROJECT_ROOT / "session-valtyry.2016"))
 
 def get_content(shortcode, username=None):
     logger.info(f"Обработка ссылки {shortcode}")
     try:
-        post = instaloader.Post.from_shortcode(L.context, shortcode)
+        post = Post.from_shortcode(L.context, shortcode)
         if username:
             L.download_post(post, target=f"{username}-{shortcode}")
         else:
             L.download_post(post, target=f"{shortcode}")
         logger.info(f"Пост успешно скачан в папку ./{shortcode}/\n")
+        logger.info(Profile.from_username(L.context, "buhaitancui1"))
     except Exception as e:
         logger.info(f"Ошибка при скачивании поста: {e}")

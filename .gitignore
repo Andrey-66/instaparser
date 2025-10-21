@@ -50,3 +50,4 @@ desktop.ini
 *.db
 *.sqlite
 *.sqlite3
+/test.py
