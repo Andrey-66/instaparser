@@ -107,6 +107,6 @@ def insta_process(driver, bot, loop):
         except Exception:
             logger.exception("Не удалось сохранить куки")
 
-        sleep_minutes = random.randint(5, 10)
+        sleep_minutes = random.randint(25, 35)
         logger.info(f"Спим {sleep_minutes} минут перед следующей итерацией")
         sleep(sleep_minutes * 60)
