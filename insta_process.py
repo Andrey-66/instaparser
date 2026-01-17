@@ -82,9 +82,9 @@ def insta_process(driver, bot, loop):
                 logger.error(f"Ошибка при обработке ссылок для {username}: {e}")
                 continue
             for link in to_download:
-                sleep_minutes = random.randint(1, 5)
-                logger.info(f"Спим {sleep_minutes} минут перед скачиванием {link}")
-                sleep(sleep_minutes * 60)
+                sleep_minutes = random.uniform(120, 300)
+                logger.info(f"Спим {sleep_minutes / 60} минут перед скачиванием {link}")
+                sleep(sleep_minutes)
                 try:
                     get_content(link, username)
                     telegram_ids = get_telegram_ids_by_username(username)
