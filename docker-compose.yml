@@ -5,8 +5,9 @@ services:
     build: .
     container_name: instaparser_bot
     restart: always
+    shm_size: '2gb'
     healthcheck:
-      test: [ "CMD-SHELL", "if [ $(expr $(date +%s) - $(stat -c %Y /proc/1)) -gt 300 ]; then exit 1; else exit 0; fi" ]
+      test: [ "CMD-SHELL", "if [ $(expr $(date +%s) - $(stat -c %Y /proc/1)) -gt 18000 ]; then exit 1; else exit 0; fi" ]
       interval: 1m
       timeout: 10s
       retries: 1
