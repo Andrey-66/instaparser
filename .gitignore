@@ -51,3 +51,4 @@ desktop.ini
 *.sqlite
 *.sqlite3
 /test.py
+/.env.dozzle
