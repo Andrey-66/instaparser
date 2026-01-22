@@ -89,7 +89,7 @@ def insta_process(driver, bot, loop):
                 logger.error(f"Ошибка при обработке ссылок для {username}: {e}")
                 continue
             for link in to_download:
-                sleep_minutes = random.uniform(120, 300)
+                sleep_minutes = random.uniform(1200, 2400)
                 logger.info(f"Спим {sleep_minutes / 60} минут перед скачиванием {link}")
                 sleep(sleep_minutes)
                 try:
@@ -117,6 +117,6 @@ def insta_process(driver, bot, loop):
         except Exception:
             logger.exception("Не удалось сохранить куки")
 
-        sleep_minutes = random.randint(25, 35)
+        sleep_minutes = random.randint(90, 120)
         logger.info(f"Спим {sleep_minutes} минут перед следующей итерацией")
         sleep(sleep_minutes * 60)
