@@ -58,6 +58,13 @@ def init_inta(driver):
     check_login(driver)
 
 
+def get_full_link(shortcode, links):
+    for link in links:
+        if link.endswith(f'{shortcode}/'):
+            return link
+    return ''
+
+
 def insta_process(driver, bot, loop):
     while True:
         try:
@@ -89,16 +96,17 @@ def insta_process(driver, bot, loop):
                     get_content(link, username)
                     telegram_ids = get_telegram_ids_by_username(username)
                     for telegram_id in telegram_ids:
+                        full_link = get_full_link(link, links)
                         try:
                             if folder_has_files(username, link):
                                 run_coroutine_threadsafe(
-                                    bot.send_message(chat_id=telegram_id, text=f"[Пост]({link}) от {username}"), loop)
+                                    bot.send_message(chat_id=telegram_id, text=f"[Пост]({full_link}) от {username}", parse_mode="Markdown"), loop)
                                 run_coroutine_threadsafe(
                                     send_content(f"{username}-{link}", telegram_id, bot, delete=False), loop)
                             else:
                                 logger.warning(f"Не удалось скачать контент {username}-{link}")
                                 run_coroutine_threadsafe(
-                                    bot.send_message(chat_id=telegram_id, text=f"Не удалось скачать [пост]({link}) от {username}"), loop)
+                                    bot.send_message(chat_id=telegram_id, text=f"Не удалось скачать [пост]({full_link}) от {username}", parse_mode="Markdown"), loop)
                         except Exception as e:
                             logger.error(e)
                 except Exception as e:
