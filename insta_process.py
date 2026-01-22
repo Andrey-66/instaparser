@@ -92,11 +92,13 @@ def insta_process(driver, bot, loop):
                         try:
                             if folder_has_files(username, link):
                                 run_coroutine_threadsafe(
-                                    bot.send_message(chat_id=telegram_id, text=f"Пост от {username}"), loop)
+                                    bot.send_message(chat_id=telegram_id, text=f"[Пост]({link}) от {username}"), loop)
                                 run_coroutine_threadsafe(
                                     send_content(f"{username}-{link}", telegram_id, bot, delete=False), loop)
                             else:
                                 logger.warning(f"Не удалось скачать контент {username}-{link}")
+                                run_coroutine_threadsafe(
+                                    bot.send_message(chat_id=telegram_id, text=f"Не удалось скачать [пост]({link}) от {username}"), loop)
                         except Exception as e:
                             logger.error(e)
                 except Exception as e:
