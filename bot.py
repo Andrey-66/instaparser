@@ -97,7 +97,7 @@ async def download(update, context):
     try:
         shortcode = url.split("/")[4]
         get_content(shortcode)
-        await send_content(shortcode, update.effective_user.id, context.bot)
+        await send_content(f'content/{shortcode}', update.effective_user.id, context.bot)
     except Exception as e:
         await update.message.reply_text("Что-то пошло не так")
 
@@ -122,7 +122,6 @@ async def send_content(dir, telegram_id, bot, delete=True):
     if not media:
         await bot.send_message(chat_id=telegram_id, text="⚠️ Контент не найден.")
         return
-
 
     if len(media) == 1:
         m = media[0]

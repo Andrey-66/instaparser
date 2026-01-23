@@ -89,7 +89,7 @@ def insta_process(driver, bot, loop):
                 logger.error(f"Ошибка при обработке ссылок для {username}: {e}")
                 continue
             for link in to_download:
-                sleep_minutes = random.uniform(1200, 2400)
+                sleep_minutes = random.uniform(120, 240)
                 logger.info(f"Спим {sleep_minutes / 60} минут перед скачиванием {link}")
                 sleep(sleep_minutes)
                 try:
@@ -102,7 +102,7 @@ def insta_process(driver, bot, loop):
                                 run_coroutine_threadsafe(
                                     bot.send_message(chat_id=telegram_id, text=f"[Пост]({full_link}) от {username}", parse_mode="Markdown"), loop)
                                 run_coroutine_threadsafe(
-                                    send_content(f"{username}-{link}", telegram_id, bot, delete=False), loop)
+                                    send_content(f"content/{username}-{link}", telegram_id, bot, delete=False), loop)
                             else:
                                 logger.warning(f"Не удалось скачать контент {username}-{link}")
                                 run_coroutine_threadsafe(

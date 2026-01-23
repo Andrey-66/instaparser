@@ -4,9 +4,6 @@
 # profiles
 /profiles
 
-# Папки с загруженным контентом (все папки пользователей)
-/*/
-
 
 # Кэш Python
 __pycache__/
@@ -53,3 +50,4 @@ desktop.ini
 /test.py
 /.env.dozzle
 /users.yml
+content/

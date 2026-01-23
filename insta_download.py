@@ -18,16 +18,16 @@ def get_content(shortcode, username=None):
     try:
         post = Post.from_shortcode(L_anonim.context, shortcode)
         if username:
-            L.download_post(post, target=f"{username}-{shortcode}")
+            L.download_post(post, target=f"content/{username}-{shortcode}")
         else:
-            L.download_post(post, target=f"{shortcode}")
-        logger.info(f"Пост успешно скачан в папку ./{shortcode}/\n")
+            L.download_post(post, target=f"content/{shortcode}")
+        logger.info(f"Пост успешно скачан в папку content/{shortcode}/\n")
     except Exception as e:
         try:
             post = Post.from_shortcode(L.context, shortcode)
             if username:
-                L.download_post(post, target=f"{username}-{shortcode}")
+                L.download_post(post, target=f"content/{username}-{shortcode}")
             else:
-                L.download_post(post, target=f"{shortcode}")
+                L.download_post(post, target=f"content/{shortcode}")
         except Exception as e:
             logger.info(f"Ошибка при скачивании поста: {e}")
