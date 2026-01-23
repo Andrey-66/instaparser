@@ -37,4 +37,5 @@ def login(driver):
     login_input.send_keys(email)
     password_input = wait.until(EC.presence_of_element_located((By.NAME, "password")))
     password_input.send_keys(password + "\n")
-    sleep(50)
+
+    sleep(40)

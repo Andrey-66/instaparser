@@ -10,6 +10,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from bot import send_content
 from cooke import load_cookies, save_cookies
+from download_selenium import selenium_download
 from files_managment import load_profiles, get_directories_list, clean_and_check_user_dirs, \
     get_telegram_ids_by_username, folder_has_files
 from insta_download import get_content
@@ -89,11 +90,14 @@ def insta_process(driver, bot, loop):
                 logger.error(f"Ошибка при обработке ссылок для {username}: {e}")
                 continue
             for link in to_download:
-                sleep_minutes = random.uniform(120, 240)
+                sleep_minutes = random.uniform(60, 240)
                 logger.info(f"Спим {sleep_minutes / 60} минут перед скачиванием {link}")
                 sleep(sleep_minutes)
                 try:
                     get_content(link, username)
+                    if not folder_has_files(username, link):
+                        logger.info('Скачиваю через selenium')
+                        selenium_download(driver, f'instagram.com/p/{link}', save_dir=None)
                     telegram_ids = get_telegram_ids_by_username(username)
                     for telegram_id in telegram_ids:
                         full_link = get_full_link(link, links)

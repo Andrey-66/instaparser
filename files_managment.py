@@ -66,7 +66,7 @@ def folder_has_files(username: str, link: str, base_dir: Optional[str] = '.') ->
     Проверяет наличие папки `f\"{username}-{link}\"` в `base_dir` и что в ней есть хотя бы один файл.
     Возвращает True, если папка существует и содержит хотя бы один файл (включая поддиректории).
     """
-    folder_name = f"{username}-{link}"
+    folder_name = f"content/{username}-{link}"
     path = os.path.join(base_dir, folder_name)
 
     if not os.path.isdir(path):

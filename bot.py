@@ -130,8 +130,12 @@ async def send_content(dir, telegram_id, bot, delete=True):
         else:
             await bot.send_video(chat_id=telegram_id, video=m.media, caption=caption, parse_mode="HTML")
         m.media.close()
-    else:
+    elif len(media) <= 10:
         await bot.send_media_group(chat_id=telegram_id, media=media, caption=caption)
+    else:
+        media = [tuple(media[i:i + 10]) for i in range(0, len(media), 10)]
+        for m in media:
+            await bot.send_media_group(chat_id=telegram_id, media=m, caption=caption)
     if delete:
         try:
             if os.path.isdir(dir) and dir not in [".", "/"]:
