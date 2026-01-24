@@ -74,7 +74,7 @@ def preauth_login(driver, repeat=False):
     wait = WebDriverWait(driver, 10)
     email_xpath_selector = "//input[@aria-label='Телефон' or @aria-label='адрес' or @aria-label='имя' or @aria-label='Phone' or @aria-label='email' or @aria-label='username']"
     password_xpath_selector = "//input[@aria-label='Пароль' or @aria-label='Password' or @type='password']"
-    two_fa_xpath_selector = "//input[@aria-label='Код безопасности' or @aria-label='Security code']"
+    two_fa_xpath_selector = "//input[@aria-label='Код безопасности' or @aria-label='Security Code']"
     try:
         logger.debug('Ищу куда ввести почту')
         email_input = wait.until(EC.element_to_be_clickable((By.XPATH, email_xpath_selector)))
