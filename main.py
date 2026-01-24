@@ -45,11 +45,13 @@ def insta_worker(options, bot, loop):
 def main():
     logger_init()
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--window-size=1920,1080")
     chrome_options.add_argument("--lang=en-US")
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    chrome_options.add_argument(f'user-agent={user_agent}')
     # Не создаём драйвер здесь — он создаётся внутри insta_worker
     auth_token = os.getenv("TOKEN")
     application = Application.builder().token(auth_token).read_timeout(30).connect_timeout(30).build()

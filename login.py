@@ -18,18 +18,6 @@ def check_login(driver):
     wait = WebDriverWait(driver, 10)
     while try_num < 5:
         try:
-            logger.info(f'Пытаюсь найти страницу авторизации {try_num+1}/5')
-            wait.until(EC.presence_of_element_located((By.NAME, "username")))
-            logger.info("Нашёл страницу авторизации")
-            login(driver)
-            return
-        except NoSuchElementException:
-            try_num += 1
-        except TimeoutException:
-            try_num += 1
-    try_num = 0
-    while try_num < 5:
-        try:
             logger.info(f'Пытаюсь найти страницу преавторизации {try_num+1}/5')
             xpath_selector = "//div[@role='button'][descendant::*[text()='Продолжить' or text()='Continue']]"
             button = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_selector)))
@@ -39,6 +27,18 @@ def check_login(driver):
             button.click()
             logger.info("Нашёл страницу преавторизации, нажал продолжить")
             preauth_login(driver)
+            return
+        except NoSuchElementException:
+            try_num += 1
+        except TimeoutException:
+            try_num += 1
+    try_num = 0
+    while try_num < 5:
+        try:
+            logger.info(f'Пытаюсь найти страницу авторизации {try_num+1}/5')
+            wait.until(EC.presence_of_element_located((By.NAME, "username")))
+            logger.info("Нашёл страницу авторизации")
+            login(driver)
             return
         except NoSuchElementException:
             try_num += 1

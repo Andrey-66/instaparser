@@ -170,6 +170,8 @@ def selenium_download(driver, url, save_dir=None):
     if not url.startswith("http"):
         url = "https://" + url
     author_name, author_url = find_profile(driver, url)
+    if not url.endswith("/"):
+        url = url + "/"
     post_shortcode = url.split("/")[-2]
     if not save_dir:
         save_dir = f'content/{author_name}-{post_shortcode}'

@@ -1,5 +1,6 @@
 import os
 import shutil
+from contextlib import suppress
 from typing import Optional
 
 from logger import logger
@@ -77,3 +78,7 @@ def folder_has_files(username: str, link: str, base_dir: Optional[str] = '.') ->
             return True
 
     return False
+
+def del_dir(path):
+    with suppress(FileNotFoundError):
+        shutil.rmtree(path)

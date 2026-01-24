@@ -1,4 +1,5 @@
 import base64
+import json
 import os
 import re
 
@@ -14,10 +15,13 @@ from logger import logger
 
 def download_instagram_video_via_network(link, folder_path):
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("--disable-gpu")
+    options.add_argument("--headless=new")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--no-sandbox")
+    options.add_argument("--window-size=1920,1080")
+    options.add_argument("--lang=en-US")
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    options.add_argument(f'user-agent={user_agent}')
     driver = webdriver.Chrome(options=options)
 
     driver.get(link)
@@ -46,6 +50,8 @@ def download_instagram_video_via_network(link, folder_path):
     audio_url = None
     max_video_bitrate = 0
 
+    os.makedirs("content/screens", exist_ok=True)
+    driver.save_screenshot(os.path.join("content/screens", f"123.png"))
     logger.info(f"Сканирую запросы (глубокий анализ) для {link}...")
 
     for request in driver.requests:
@@ -57,42 +63,34 @@ def download_instagram_video_via_network(link, folder_path):
 
         if 'video' in content_type or 'audio' in content_type or '.mp4' in url:
             clean_url = re.sub(r'&bytestart=\d+&byteend=\d+', '', url)
-            is_audio = False
             efg_match = re.search(r'efg=([^&]+)', clean_url)
+
             if efg_match:
                 try:
+                    # Декодируем efg
                     encoded_efg = efg_match.group(1)
-                    decoded_efg = base64.b64decode(encoded_efg + "===").decode('utf-8', errors='ignore')
+                    decoded_str = base64.b64decode(encoded_efg + "===").decode('utf-8', errors='ignore')
 
-                    if 'audio' in decoded_efg.lower():
-                        is_audio = True
-                except Exception:
-                    pass
+                    # На всякий случай чистим строку от лишних символов в конце (как та '7' в твоем примере)
+                    valid_json_str = re.search(r'(\{.*?\})', decoded_str).group(1)
+                    efg_data = json.loads(valid_json_str)
 
-            if not is_audio and 'audio' in clean_url.lower():
-                is_audio = True
+                    vencode_tag = efg_data.get("vencode_tag", "").lower()
 
-            if is_audio:
-                audio_url = clean_url
-            else:
-                bitrate_match = re.search(r'bitrate=(\d+)', clean_url)
-                bitrate = int(bitrate_match.group(1)) if bitrate_match else 0
-
-                if bitrate > max_video_bitrate:
-                    max_video_bitrate = bitrate
-                    video_url = clean_url
-
-    if not video_url:
-        for request in driver.requests:
-            if request.response and request.response.headers:
-                content_type = request.response.headers.get('Content-Type', '').lower()
-                if 'video' in content_type:
-                    url = request.url
-                    clean_url = re.sub(r'&bytestart=\d+&byteend=\d+', '', url)
-                    if 'audio' in clean_url:
+                    # Прямая логика разделения
+                    if "_audio" in vencode_tag:
                         audio_url = clean_url
+                        print(f"Найдено аудио: {vencode_tag}")
                     else:
-                        video_url = clean_url
+                        # Если это не аудио, проверяем битрейт для видео
+                        bitrate = efg_data.get("bitrate", 0)
+                        if bitrate > max_video_bitrate:
+                            max_video_bitrate = bitrate
+                            video_url = clean_url
+                            print(f"Найдено видео: {vencode_tag} (Bitrate: {bitrate})")
+
+                except Exception as e:
+                    print(f"Ошибка парсинга efg: {e}")
 
 
     logger.debug(f'Нашёл исходник видео для {video_url}')

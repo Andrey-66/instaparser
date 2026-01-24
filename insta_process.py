@@ -12,7 +12,7 @@ from bot import send_content
 from cooke import load_cookies, save_cookies
 from download_selenium import selenium_download
 from files_managment import load_profiles, get_directories_list, clean_and_check_user_dirs, \
-    get_telegram_ids_by_username, folder_has_files
+    get_telegram_ids_by_username, folder_has_files, del_dir
 from insta_download import get_content
 from logger import logger
 from login import check_login
@@ -114,6 +114,7 @@ def insta_process(driver, bot, loop):
                                 logger.warning(f"Не удалось скачать контент {username}-{link}")
                                 run_coroutine_threadsafe(
                                     bot.send_message(chat_id=telegram_id, text=f"Не удалось скачать [пост]({full_link}) от {username}", parse_mode="Markdown"), loop)
+                                del_dir(f'content/{username}-{link}')
                         except Exception as e:
                             logger.error(e)
                 except Exception as e:
