@@ -124,7 +124,7 @@ def find_profile(driver, post_url):
         author_url = author_element.get_attribute("href")
         author_name = author_element.text
         return author_name, author_url
-    except:
+    except Exception as e:
         screen_name = f'{int(time.time_ns())}.png'
         os.makedirs("content/screens", exist_ok=True)
         driver.save_screenshot(os.path.join("content/screens", screen_name))
@@ -167,6 +167,8 @@ def get_text_preview(driver, author_url, post_shortcode, save_dir, download_prev
 
 def selenium_download(driver, url, save_dir=None):
     logger.info(f'Сохраняю {url}')
+    if not url.startswith("http"):
+        url = "https://" + url
     author_name, author_url = find_profile(driver, url)
     post_shortcode = url.split("/")[-2]
     if not save_dir:
