@@ -51,3 +51,7 @@ desktop.ini
 /.env.dozzle
 /users.yml
 content/
+
+*.png
+session*
+temp*.py
