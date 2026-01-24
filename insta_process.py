@@ -79,7 +79,9 @@ def insta_process(driver, bot, loop):
                 links = get_links(driver, username)
                 logger.debug(links)
                 if not links:
-                    os.makedirs("content", exist_ok=True); driver.save_screenshot(os.path.join("content", f"screens.png"))
+                    os.makedirs("content", exist_ok=True)
+                    driver.save_screenshot(os.path.join("content", f"{username}.png"))
+                    logger.warning(f'Не нашёл ссылок, сделал скрин {username}.png')
                     continue
                 directories = get_directories_list(username, links)
                 to_download = clean_and_check_user_dirs(username, directories)
