@@ -84,7 +84,7 @@ def insta_process(driver, bot, loop):
                     logger.warning(f'Не нашёл ссылок, сделал скрин {username}.png')
                     continue
                 directories = get_directories_list(username, links)
-                to_download = clean_and_check_user_dirs(username, directories)
+                to_download = clean_and_check_user_dirs(username, directories, 'content')
                 logger.info(f"Нужно скачать: {to_download}")
             except (TimeoutException, WebDriverException) as e:
                 logger.warning(f"Ошибка при получении ссылок для {username}: {e}")
