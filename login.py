@@ -83,7 +83,9 @@ def preauth_login(driver, repeat=False):
         email_input.send_keys(email+'\n')
         logger.debug('Ввёл почту')
     except (NoSuchElementException, TimeoutException):
-        logger.debug('Не нашёл куда ввести почту')
+        os.makedirs("content", exist_ok=True)
+        driver.save_screenshot(os.path.join("content", "email.png"))
+        logger.debug('Не нашёл куда ввести почту, сделал скрин email.png')
     sleep(5)
     try:
         logger.debug('Ищу куда ввести пароль')
@@ -93,7 +95,9 @@ def preauth_login(driver, repeat=False):
         password_input.send_keys(password+'\n')
         logger.debug('Ввёл пароль')
     except (NoSuchElementException, TimeoutException):
-        logger.debug('Не нашёл куда ввести пароль')
+        os.makedirs("content", exist_ok=True)
+        driver.save_screenshot(os.path.join("content", "password.png"))
+        logger.debug('Не нашёл куда ввести пароль, сделал скрин password.png')
     sleep(5)
     try:
         logger.debug('Ищу куда ввести 2fa код')
@@ -105,7 +109,9 @@ def preauth_login(driver, repeat=False):
         two_fa_input.send_keys(current_code+'\n')
         logger.debug('Ввёл 2fa код')
     except (NoSuchElementException, TimeoutException):
-        logger.debug('Не нашёл куда ввести почту')
+        os.makedirs("content", exist_ok=True)
+        driver.save_screenshot(os.path.join("content", "2fa.png"))
+        logger.debug('Не нашёл куда 2fa код почту, сделал скрин 2fa.png')
 
     if repeat:
         preauth_login(driver)
