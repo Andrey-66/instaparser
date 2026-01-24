@@ -4,8 +4,6 @@ import random
 import time
 from time import sleep
 
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from download_selenium_wire import download_instagram_video_via_network
 
@@ -122,7 +120,7 @@ def find_profile(driver, post_url):
     try:
         open_page(driver, post_url)
         sleep(random.uniform(5, 15))
-        author_element = driver.find_element(By.XPATH, "//div[contains(text(), 'Ещё публикации от')]//a")
+        author_element = driver.find_element(By.XPATH, "//div[contains(text(), 'Ещё публикации от') or contains(text(), 'More posts from')]//a")
         author_url = author_element.get_attribute("href")
         author_name = author_element.text
         return author_name, author_url

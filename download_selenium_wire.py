@@ -27,14 +27,14 @@ def download_instagram_video_via_network(link, folder_path):
     driver.execute_script("window.scrollBy(0, -100);")
     time.sleep(30)
     try:
-        close_button = driver.find_element(By.XPATH, "//*[@aria-label='Закрыть']")
+        close_button = driver.find_element(By.XPATH, "//*[@aria-label='Закрыть' or @aria-label='Close']")
         close_button.click()
         logger.info("Кнопка 'Закрыть' нажата")
     except Exception:
         logger.info("Кнопка 'Закрыть' не найдена")
     time.sleep(10)
     try:
-        mute_button = driver.find_element(By.XPATH, "//*[@aria-label='Звук выключен']")
+        mute_button = driver.find_element(By.XPATH, "//*[@aria-label='Звук выключен' or @aria-label='Audio is muted']")
         mute_button.click()
         logger.info("Кнопка 'Звук' нажата")
     except Exception:
@@ -55,13 +55,9 @@ def download_instagram_video_via_network(link, folder_path):
         url = request.url
         content_type = request.response.headers.get('Content-Type', '').lower()
 
-
         if 'video' in content_type or 'audio' in content_type or '.mp4' in url:
             clean_url = re.sub(r'&bytestart=\d+&byteend=\d+', '', url)
-
-
             is_audio = False
-
             efg_match = re.search(r'efg=([^&]+)', clean_url)
             if efg_match:
                 try:
@@ -90,11 +86,9 @@ def download_instagram_video_via_network(link, folder_path):
         for request in driver.requests:
             if request.response and request.response.headers:
                 content_type = request.response.headers.get('Content-Type', '').lower()
-
                 if 'video' in content_type:
                     url = request.url
                     clean_url = re.sub(r'&bytestart=\d+&byteend=\d+', '', url)
-
                     if 'audio' in clean_url:
                         audio_url = clean_url
                     else:
