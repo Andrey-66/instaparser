@@ -127,7 +127,10 @@ def find_profile(driver, post_url):
         author_name = author_element.text
         return author_name, author_url
     except:
-        logger.error("Не удалось найти блок автора по тексту")
+        screen_name = f'{int(time.time_ns())}.png'
+        os.makedirs("content/screens", exist_ok=True)
+        driver.save_screenshot(os.path.join("content/screens", screen_name))
+        logger.error(f"Не удалось найти блок автора по тексту, сделал скрин {screen_name}")
 
 
 def get_text_preview(driver, author_url, post_shortcode, save_dir, download_preview = True):
