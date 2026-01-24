@@ -3,6 +3,7 @@ import json
 import os
 import re
 
+import requests
 from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from selenium.webdriver.common.by import By
@@ -80,17 +81,17 @@ def download_instagram_video_via_network(link, folder_path):
                     # Прямая логика разделения
                     if "_audio" in vencode_tag:
                         audio_url = clean_url
-                        print(f"Найдено аудио: {vencode_tag}")
+                        logger.debug(f"Найдено аудио: {vencode_tag}")
                     else:
                         # Если это не аудио, проверяем битрейт для видео
                         bitrate = efg_data.get("bitrate", 0)
                         if bitrate > max_video_bitrate:
                             max_video_bitrate = bitrate
                             video_url = clean_url
-                            print(f"Найдено видео: {vencode_tag} (Bitrate: {bitrate})")
+                            logger.debug(f"Найдено видео: {vencode_tag} (Bitrate: {bitrate})")
 
                 except Exception as e:
-                    print(f"Ошибка парсинга efg: {e}")
+                    pass
 
 
     logger.debug(f'Нашёл исходник видео для {video_url}')
@@ -101,52 +102,66 @@ def download_instagram_video_via_network(link, folder_path):
 
 
 def download_media_combined(driver, video_url, audio_url, folder_path):
+    # Используем расширение mp4 для обоих, так как в Instagram аудио часто в m4a/mp4
     v_temp = os.path.join(folder_path, "temp_video.mp4")
     a_temp = os.path.join(folder_path, "temp_audio.mp3")
     final_path = os.path.join(folder_path, f"video_{int(time.time_ns())}.mp4")
 
-    def fetch_blob_to_file(url, target_path):
-        driver.execute_script(f"window.open('{url}');")
-        driver.switch_to.window(driver.window_handles[-1])
-
-        js_fetch = """
-        var callback = arguments[arguments.length - 1];
-        fetch(window.location.href).then(r => r.blob()).then(b => {
-            var reader = new FileReader();
-            reader.onloadend = () => callback(reader.result.split(',')[1]);
-            reader.readAsDataURL(b);
-        }).catch(e => callback("error:" + e));
-        """
+    # Метод скачивания через requests (если ссылки НЕ blob, это в 100 раз стабильнее)
+    def download_file(url, target_path):
         try:
-            driver.set_script_timeout(60)
-            b64 = driver.execute_async_script(js_fetch)
-            if not b64.startswith("error"):
-                with open(target_path, "wb") as f:
-                    f.write(base64.b64decode(b64))
-                return True
-        finally:
-            driver.close()
-            driver.switch_to.window(driver.window_handles[0])
-        return False
+            # Если ссылка начинается на http, качаем напрямую через requests
+            if url.startswith('http'):
+                r = requests.get(url, stream=True, timeout=30)
+                if r.status_code == 200:
+                    with open(target_path, 'wb') as f:
+                        for chunk in r.iter_content(chunk_size=8192):
+                            f.write(chunk)
+                    return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка requests: {e}")
+            return False
 
-    logger.info("Загрузка видео-потока...")
-    if fetch_blob_to_file(video_url, v_temp):
-        logger.info("Загрузка аудио-потока...")
-        if fetch_blob_to_file(audio_url, a_temp):
-            logger.info("Склеивание дорожек...")
-            try:
-                with VideoFileClip(v_temp) as video:
-                    current_fps = video.fps if video.fps else 30
-                    with AudioFileClip(a_temp) as audio:
-                        final_video = video.set_audio(audio)
-                        final_video.write_videofile(final_path, codec="libx264", audio_codec="aac", fps=current_fps,
-                                                    logger=None)
+    logger.info(f"Загрузка видео: {video_url[:50]}...")
+    if not download_file(video_url, v_temp):
+        logger.error("Не удалось скачать видео-файл")
+        return 1
 
-                logger.info(f"Готово! Видео со звуком: {final_path}")
-                return 0
-            except Exception as e:
-                logger.error(f"Ошибка при обработке видео: {e}")
-            finally:
-                if os.path.exists(v_temp): os.remove(v_temp)
-                if os.path.exists(a_temp): os.remove(a_temp)
-    return 1
+    logger.info(f"Загрузка аудио: {audio_url[:50]}...")
+    if not download_file(audio_url, a_temp):
+        logger.error("Не удалось скачать аудио-файл")
+        return 1
+
+    logger.info("Склеивание дорожек через MoviePy...")
+    try:
+        # ВАЖНО: Explicitly закрываем объекты через with или .close()
+        video_clip = VideoFileClip(v_temp)
+        audio_clip = AudioFileClip(a_temp)
+
+        final_video = video_clip.set_audio(audio_clip)
+
+        # На сервере часто нет GPU, поэтому используем стандартный софтверный кодек
+        final_video.write_videofile(
+            final_path,
+            codec="libx264",
+            audio_codec="aac",
+            fps=video_clip.fps or 30,
+            logger=None,
+            threads=4  # Ускоряет на многоядерных серверах
+        )
+
+        video_clip.close()
+        audio_clip.close()
+
+        logger.info(f"Успешно сохранено: {final_path}")
+        return 0
+
+    except Exception as e:
+        logger.error(f"Ошибка MoviePy на сервере: {e}")
+        return 1
+    finally:
+        # Чистим временные файлы
+        for tmp in [v_temp, a_temp]:
+            if os.path.exists(tmp):
+                os.remove(tmp)

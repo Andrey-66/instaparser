@@ -156,6 +156,8 @@ def get_text_preview(driver, author_url, post_shortcode, save_dir, download_prev
                 if download_preview:
                     selenium_save_image(driver, img_src, f"{save_dir}/image_{int(time.time_ns())}.jpg")
                     logger.info(f"✅ Превью успешно сохранено в: {save_dir}/image_{int(time.time_ns())}.jpg")
+                else:
+                    logger.info(f"✅ Превью не скачиваю")
                 return
             except Exception as e:
                 logger.error("В этой ссылке нет тега img или он еще не прогрузился")
