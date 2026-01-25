@@ -116,7 +116,12 @@ def insta_process(driver, bot, loop):
                                     bot.send_message(chat_id=telegram_id, text=f"Не удалось скачать [пост]({full_link}) от {username}", parse_mode="Markdown"), loop)
                                 del_dir(f'content/{username}-{link}')
                         except Exception as e:
-                            logger.error(e)
+                            logger.error(f"Ошибка при скачивании {link}: {e}")
+                            run_coroutine_threadsafe(
+                                bot.send_message(chat_id=telegram_id,
+                                                 text=f"Не удалось скачать [пост]({full_link}) от {username}",
+                                                 parse_mode="Markdown"), loop)
+                            del_dir(f'content/{username}-{link}')
                 except Exception as e:
                     logger.error(f"Ошибка при скачивании {link}: {e}")
                     del_dir(f'content/{username}-{link}')
