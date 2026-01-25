@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import re
+import subprocess
 
 import requests
 from moviepy.audio.io.AudioFileClip import AudioFileClip
@@ -133,28 +134,30 @@ def download_media_combined(video_url, audio_url, folder_path):
         logger.error("Не удалось скачать аудио-файл")
         return 1
 
-    logger.info("Склеивание дорожек через MoviePy...")
     try:
-        video_clip = VideoFileClip(v_temp)
-        audio_clip = AudioFileClip(a_temp)
+        cmd = [
+            'ffmpeg', '-y',  # Перезаписать файл, если существует
+            '-i', v_temp,  # Входное видео
+            '-i', a_temp,  # Входное аудио
+            '-c:v', 'copy',  # Копируем видеопоток
+            '-c:a', 'aac',  # Кодируем аудио в AAC (совместим с MP4)
+            '-map', '0:v:0',  # Берем видео из первого файла
+            '-map', '1:a:0',  # Берем аудио из второго файла
+            '-shortest',  # Обрезать по самому короткому файлу
+            final_path
+        ]
 
-        final_video = video_clip.set_audio(audio_clip)
+        # Запускаем процесс
+        result = subprocess.run(cmd, capture_output=True, text=True)
 
-        final_video.write_videofile(
-            final_path,
-            codec="libx264",
-            audio_codec="aac",
-            preset="ultrafast",  # Самый быстрый режим, минимум нагрузки на CPU
-            threads=1  # Ограничиваем до 1 потока, чтобы не вешать сервер
-        )
+        if result.returncode != 0:
+            logger.error(f"FFmpeg error: {result.stderr}")
+            return 1
 
-        video_clip.close()
-        audio_clip.close()
-
-        logger.info(f"Успешно сохранено: {final_path}")
-
+        logger.info(f"Успешно склеено через FFmpeg: {final_path}")
+        return 0
     except Exception as e:
-        logger.error(f"Ошибка MoviePy на сервере: {e}")
+        logger.error(f"Ошибка при вызове FFmpeg: {e}")
         return 1
     finally:
         for tmp in [v_temp, a_temp]:
