@@ -96,12 +96,12 @@ def download_instagram_video_via_network(link, folder_path):
 
     logger.debug(f'Нашёл исходник видео для {video_url}')
     logger.debug(f'Нашёл исходник аудио для {audio_url}')
-    download_media_combined(driver, video_url, audio_url, folder_path)
+    download_media_combined(video_url, audio_url, folder_path)
 
     driver.quit()
 
 
-def download_media_combined(driver, video_url, audio_url, folder_path):
+def download_media_combined(video_url, audio_url, folder_path):
     # Используем расширение mp4 для обоих, так как в Instagram аудио часто в m4a/mp4
     v_temp = os.path.join(folder_path, "temp_video.mp4")
     a_temp = os.path.join(folder_path, "temp_audio.mp3")
@@ -135,33 +135,22 @@ def download_media_combined(driver, video_url, audio_url, folder_path):
 
     logger.info("Склеивание дорожек через MoviePy...")
     try:
-        # ВАЖНО: Explicitly закрываем объекты через with или .close()
         video_clip = VideoFileClip(v_temp)
         audio_clip = AudioFileClip(a_temp)
 
         final_video = video_clip.set_audio(audio_clip)
 
-        # На сервере часто нет GPU, поэтому используем стандартный софтверный кодек
-        final_video.write_videofile(
-            final_path,
-            codec="libx264",
-            audio_codec="aac",
-            fps=video_clip.fps or 30,
-            logger=None,
-            threads=4  # Ускоряет на многоядерных серверах
-        )
+        final_video.write_videofile(final_path)
 
         video_clip.close()
         audio_clip.close()
 
         logger.info(f"Успешно сохранено: {final_path}")
-        return 0
 
     except Exception as e:
         logger.error(f"Ошибка MoviePy на сервере: {e}")
         return 1
     finally:
-        # Чистим временные файлы
         for tmp in [v_temp, a_temp]:
             if os.path.exists(tmp):
                 os.remove(tmp)

@@ -4,6 +4,7 @@ import shutil
 from telegram import InputMediaPhoto, InputMediaVideo
 
 from acces import restricted
+from files_managment import del_dir
 from insta_download import get_content
 from logger import logger
 
@@ -121,6 +122,7 @@ async def send_content(dir, telegram_id, bot, delete=True):
 
     if not media:
         await bot.send_message(chat_id=telegram_id, text="⚠️ Контент не найден.")
+        del_dir(dir)
         return
 
     if len(media) == 1:
