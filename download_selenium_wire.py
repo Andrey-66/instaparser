@@ -140,7 +140,13 @@ def download_media_combined(video_url, audio_url, folder_path):
 
         final_video = video_clip.set_audio(audio_clip)
 
-        final_video.write_videofile(final_path)
+        final_video.write_videofile(
+            final_path,
+            codec="copy",  # Не перекодировать видео
+            audio_codec="aac",  # Кодек для аудио
+            temp_audiofile="temp-audio.m4a",
+            remove_temp=True
+        )
 
         video_clip.close()
         audio_clip.close()
