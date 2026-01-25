@@ -95,9 +95,9 @@ def insta_process(driver, bot, loop):
             for link in to_download:
                 sleep_minutes = random.uniform(60, 240)
                 logger.info(f"Спим {sleep_minutes / 60} минут перед скачиванием {link}")
-                # sleep(sleep_minutes)
+                sleep(sleep_minutes)
                 try:
-                    # get_content(link, username)
+                    get_content(link, username)
                     if not folder_has_files(username, link):
                         logger.info('Скачиваю через selenium')
                         selenium_download(driver, f'instagram.com/p/{link}', save_dir=None)
