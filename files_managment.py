@@ -82,3 +82,4 @@ def folder_has_files(username: str, link: str, base_dir: Optional[str] = '.') ->
 def del_dir(path):
     with suppress(FileNotFoundError):
         shutil.rmtree(path)
+        logger.info(f'Директория {path} удалена')

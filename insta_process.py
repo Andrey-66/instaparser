@@ -119,6 +119,7 @@ def insta_process(driver, bot, loop):
                             logger.error(e)
                 except Exception as e:
                     logger.error(f"Ошибка при скачивании {link}: {e}")
+                    del_dir(f'content/{username}-{link}')
 
         try:
             save_cookies(driver)
