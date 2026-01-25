@@ -142,10 +142,10 @@ def download_media_combined(video_url, audio_url, folder_path):
 
         final_video.write_videofile(
             final_path,
-            codec="copy",  # Не перекодировать видео
-            audio_codec="aac",  # Кодек для аудио
-            temp_audiofile="temp-audio.m4a",
-            remove_temp=True
+            codec="libx264",
+            audio_codec="aac",
+            preset="ultrafast",  # Самый быстрый режим, минимум нагрузки на CPU
+            threads=1  # Ограничиваем до 1 потока, чтобы не вешать сервер
         )
 
         video_clip.close()
