@@ -35,7 +35,7 @@ def check_login(driver):
     try_num = 0
     while try_num < 5:
         try:
-            logger.info(f'Пытаюсь найти страницу авторизации {try_num+1}/5')
+            logger.info(f'Пытаюсь найти старую страницу авторизации {try_num+1}/5')
             wait.until(EC.presence_of_element_located((By.NAME, "username")))
             logger.info("Нашёл страницу авторизации")
             login(driver)
@@ -44,6 +44,10 @@ def check_login(driver):
             try_num += 1
         except TimeoutException:
             try_num += 1
+    os.makedirs("content/screens", exist_ok=True)
+    driver.save_screenshot(os.path.join("content/screens", "login.png"))
+    logger.error('Не смог авторизоваться, скрин login.png, пытаюсь авторизоваться "на дурака"')
+    preauth_login(driver)
 
 
 
