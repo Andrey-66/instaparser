@@ -21,7 +21,7 @@ def check_login(driver):
     wait = WebDriverWait(driver, 10)
     try:
         open_page(driver, 'https://www.instagram.com/accounts/edit/')
-        sleep(random.uniform(1, 3))
+        sleep(random.uniform(5, 10))
         driver.find_element(By.XPATH, "//h2[text()='Edit profile']")
         logger.info('Авторизация не требуется')
         return
