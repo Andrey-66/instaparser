@@ -212,6 +212,11 @@ def selenium_download(driver, url, save_dir=None):
         download_iqsaved(driver, f'instagram.com/p/{post_shortcode}', save_dir=save_dir)
     if not folder_has_files(author_name, post_shortcode):
         return
+    v_temp = os.path.join(save_dir, "temp_video.mp4")
+    a_temp = os.path.join(save_dir, "temp_audio.mp3")
+    for tmp in [v_temp, a_temp]:
+        if os.path.exists(tmp):
+            os.remove(tmp)
     files = glob.glob(os.path.join(save_dir, "*.mp4"))
     if files:
         get_text_preview(driver, author_url, post_shortcode, save_dir)
