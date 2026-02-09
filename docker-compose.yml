@@ -20,6 +20,7 @@ services:
         max-file: "3"
     volumes:
       - ./content:/app/content
+      - ./ig_cookies
 
   dozzle:
     image: amir20/dozzle:latest
