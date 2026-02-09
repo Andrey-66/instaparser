@@ -210,6 +210,8 @@ def selenium_download(driver, url, save_dir=None):
     except Exception as e:
         logger.warning(f'Загрузка через selenium не удалась: {e}')
         download_iqsaved(driver, f'instagram.com/p/{post_shortcode}', save_dir=save_dir)
+    if not folder_has_files(author_name, post_shortcode):
+        return
     files = glob.glob(os.path.join(save_dir, "*.mp4"))
     if files:
         get_text_preview(driver, author_url, post_shortcode, save_dir)
