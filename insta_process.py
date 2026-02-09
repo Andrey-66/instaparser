@@ -109,11 +109,10 @@ def insta_process(options, bot, loop):
                 continue
             for shortcode in to_download:
                 sleep_minutes = random.uniform(60, 240)
-                sleep_minutes /= 60
                 logger.info(f"Спим {sleep_minutes / 60} минут перед скачиванием {shortcode}")
                 sleep(sleep_minutes)
                 try:
-                    # get_content(shortcode, username)
+                    get_content(shortcode, username)
                     if not folder_has_files(username, shortcode):
                         logger.info('Скачиваю через selenium')
                         save_dir = f'content/{username}-{shortcode}'
