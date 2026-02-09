@@ -74,7 +74,8 @@ def folder_has_files(username: str, link: str, base_dir: Optional[str] = '.') ->
         return False
 
     for _, _, files in os.walk(path):
-        if files:  # если есть любые файлы
+        if files:
+            logger.debug(files)
             return True
 
     return False
