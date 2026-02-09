@@ -170,11 +170,15 @@ def get_text_preview(driver, author_url, post_shortcode, save_dir, download_prev
     get_text_preview(driver, author_url, post_shortcode, save_dir)
 
 
-def selenium_download(driver, url, save_dir=None):
+def selenium_download(driver, url, save_dir=None, username=None):
     logger.info(f'Сохраняю {url}')
     if not url.startswith("http"):
         url = "https://" + url
-    author_name, author_url = find_profile(driver, url)
+    if not username:
+        author_name, author_url = find_profile(driver, url)
+    else:
+        author_name = username
+        author_url = f'https://www.instagram.com/{username}/'
     if not url.endswith("/"):
         url = url + "/"
     post_shortcode = url.split("/")[-2]

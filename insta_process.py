@@ -115,7 +115,7 @@ def insta_process(options, bot, loop):
                     get_content(link, username)
                     if not folder_has_files(username, link):
                         logger.info('Скачиваю через selenium')
-                        selenium_download(driver, f'instagram.com/p/{link}', save_dir=None)
+                        selenium_download(driver, f'instagram.com/p/{link}', save_dir=None, username=username)
                     telegram_ids = get_telegram_ids_by_username(username)
                     for telegram_id in telegram_ids:
                         full_link = get_full_link(link, links)
@@ -128,6 +128,7 @@ def insta_process(options, bot, loop):
                                 logger.info('🎉 Сообщение с постом отправлено')
                             else:
                                 logger.warning(f"Не удалось скачать контент {username}-{link}")
+                                logger.debug()
                                 run_coroutine_threadsafe(
                                     bot.send_message(chat_id=telegram_id, text=f"Не удалось скачать [пост]({full_link}) от {username}", parse_mode="Markdown"), loop)
                                 del_dir(f'content/{username}-{link}')
