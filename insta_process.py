@@ -125,6 +125,7 @@ def insta_process(options, bot, loop):
                                     bot.send_message(chat_id=telegram_id, text=f"[Пост]({full_link}) от {username}", parse_mode="Markdown"), loop)
                                 run_coroutine_threadsafe(
                                     send_content(f"content/{username}-{link}", telegram_id, bot, delete=False), loop)
+                                logger.info('🎉 Сообщение с постом отправлено')
                             else:
                                 logger.warning(f"Не удалось скачать контент {username}-{link}")
                                 run_coroutine_threadsafe(

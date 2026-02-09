@@ -181,9 +181,13 @@ def selenium_download(driver, url, save_dir=None):
     if not save_dir:
         save_dir = f'content/{author_name}-{post_shortcode}'
     os.makedirs(save_dir, exist_ok=True)
-    selenium_download_media(driver, url, save_dir)
-    if not folder_has_files(author_name, post_shortcode):
-        logger.warning('Загрузка через selenium не удалась')
+    try:
+        selenium_download_media(driver, url, save_dir)
+        if not folder_has_files(author_name, post_shortcode):
+            logger.warning('Загрузка через selenium не удалась')
+            download_iqsaved(driver, f'instagram.com/p/{post_shortcode}', save_dir=save_dir)
+    except Exception as e:
+        logger.warning(f'Загрузка через selenium не удалась: {e}')
         download_iqsaved(driver, f'instagram.com/p/{post_shortcode}', save_dir=save_dir)
     files = glob.glob(os.path.join(save_dir, "*.mp4"))
     if files:
