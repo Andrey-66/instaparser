@@ -71,11 +71,12 @@ def folder_has_files(username: str, link: str, base_dir: Optional[str] = '.') ->
     path = os.path.join(base_dir, folder_name)
 
     if not os.path.isdir(path):
+        logger.warning('Папка пуста')
         return False
 
     for _, _, files in os.walk(path):
+        logger.debug(files)
         if files:
-            logger.debug(files)
             return True
 
     return False
