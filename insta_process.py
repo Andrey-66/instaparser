@@ -11,7 +11,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from bot import send_content
 from cooke import load_cookies, save_cookies
-from download_iqsaved import download_iqsaved
 from download_selenium import selenium_download
 from files_managment import load_profiles, get_directories_list, clean_and_check_user_dirs, \
     get_telegram_ids_by_username, folder_has_files, del_dir
@@ -105,7 +104,6 @@ def insta_process(options, bot, loop):
                 continue
             for link in to_download:
                 sleep_minutes = random.uniform(60, 240)
-                sleep_minutes /=60
                 logger.info(f"Спим {sleep_minutes / 60} минут перед скачиванием {link}")
                 sleep(sleep_minutes)
                 try:
