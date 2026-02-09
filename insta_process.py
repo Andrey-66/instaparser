@@ -86,6 +86,11 @@ def insta_process(options, bot, loop):
                     os.makedirs("content/screens", exist_ok=True)
                     driver.save_screenshot(os.path.join("content/screens", f"{username}.png"))
                     logger.warning(f'Не нашёл ссылок, сделал скрин {username}.png')
+                    telegram_ids = get_telegram_ids_by_username(username)
+                    for telegram_id in telegram_ids:
+                        run_coroutine_threadsafe(
+                            bot.send_message(chat_id=telegram_id, text=f"Не смог загрузить ссылки для  {username}",
+                                             parse_mode="Markdown"), loop)
                     continue
                 directories = get_directories_list(username, links)
                 to_download = clean_and_check_user_dirs(username, directories, 'content')
