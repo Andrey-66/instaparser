@@ -17,7 +17,6 @@ from open_page import open_page
 
 
 def check_login(driver):
-    try_num = 0
     wait = WebDriverWait(driver, 10)
     try:
         open_page(driver, 'https://www.instagram.com/accounts/edit/')
@@ -26,9 +25,9 @@ def check_login(driver):
         logger.info('Авторизация не требуется')
         return
     except NoSuchElementException:
-        try_num += 1
+        try_num = 0
     except TimeoutException:
-        try_num += 1
+        try_num = 0
     while try_num < 5:
         try:
             logger.info(f'Пытаюсь найти страницу авторизации {try_num+1}/5')
