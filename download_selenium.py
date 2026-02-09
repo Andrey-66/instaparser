@@ -29,10 +29,10 @@ def clean_and_get_big_imgs(driver, url, save_dir):
     # 2. Удаляем блок "Ещё публикации" через JavaScript
     # Мы ищем заголовки h2 или h3, содержащие текст "Ещё" или "More"
     current_post_id = url.split('/p/')[1].split('/')[0]
-    script = """
+    script_reel = """
         let currentId = arguments[0];
         // Находим все ссылки на посты
-        let links = document.querySelectorAll('a[href*="/p/"]');
+        let links = document.querySelectorAll('a[href*="/reel/"]');
 
         links.forEach(a => {
             let href = a.getAttribute('href');
@@ -49,7 +49,28 @@ def clean_and_get_big_imgs(driver, url, save_dir):
             }
         });
         """
-    driver.execute_script(script, current_post_id)
+    script_post = """
+            let currentId = arguments[0];
+            // Находим все ссылки на посты
+            let links = document.querySelectorAll('a[href*="/p/"]');
+
+            links.forEach(a => {
+                let href = a.getAttribute('href');
+                // Если ссылка ведет на ДРУГОЙ пост (не содержит id текущего)
+                if (!href.includes(currentId)) {
+                    // Ищем самый верхний родительский контейнер, который похож на карточку поста
+                    // Обычно это div с определенным набором классов, но мы удалим ближайший крупный блок
+                    let container = a.closest('div[style*="padding-bottom"], div.html-div'); 
+                    if (container) {
+                        container.remove();
+                    } else {
+                        a.remove(); // Если контейнер не найден, удаляем хотя бы саму ссылку
+                    }
+                }
+            });
+            """
+    driver.execute_script(script_reel, current_post_id)
+    driver.execute_script(script_post, current_post_id)
     logger.info("Похожие публикации удалены по фильтру ссылок.")
 
     # 3. Собираем все img, которые остались на странице
@@ -170,15 +191,11 @@ def get_text_preview(driver, author_url, post_shortcode, save_dir, download_prev
     get_text_preview(driver, author_url, post_shortcode, save_dir)
 
 
-def selenium_download(driver, url, save_dir=None, username=None):
+def selenium_download(driver, url, save_dir=None):
     logger.info(f'Сохраняю {url}')
     if not url.startswith("http"):
         url = "https://" + url
-    if not username:
-        author_name, author_url = find_profile(driver, url)
-    else:
-        author_name = username
-        author_url = f'https://www.instagram.com/{username}/'
+    author_name, author_url = find_profile(driver, url)
     if not url.endswith("/"):
         url = url + "/"
     post_shortcode = url.split("/")[-2]

@@ -107,41 +107,43 @@ def insta_process(options, bot, loop):
                                          parse_mode="Markdown"), loop)
 
                 continue
-            for link in to_download:
+            for shortcode in to_download:
                 sleep_minutes = random.uniform(60, 240)
-                logger.info(f"Спим {sleep_minutes / 60} минут перед скачиванием {link}")
+                sleep_minutes /= 60
+                logger.info(f"Спим {sleep_minutes / 60} минут перед скачиванием {shortcode}")
                 sleep(sleep_minutes)
                 try:
-                    get_content(link, username)
-                    if not folder_has_files(username, link):
+                    # get_content(shortcode, username)
+                    if not folder_has_files(username, shortcode):
                         logger.info('Скачиваю через selenium')
-                        selenium_download(driver, f'instagram.com/p/{link}', save_dir=None, username=username)
+                        save_dir = f'content/{username}-{shortcode}'
+                        selenium_download(driver, f'instagram.com/p/{shortcode}', save_dir=save_dir)
                     telegram_ids = get_telegram_ids_by_username(username)
                     for telegram_id in telegram_ids:
-                        full_link = get_full_link(link, links)
+                        full_link = get_full_link(shortcode, links)
                         try:
-                            if folder_has_files(username, link):
+                            if folder_has_files(username, shortcode):
                                 run_coroutine_threadsafe(
                                     bot.send_message(chat_id=telegram_id, text=f"[Пост]({full_link}) от {username}", parse_mode="Markdown"), loop)
                                 run_coroutine_threadsafe(
-                                    send_content(f"content/{username}-{link}", telegram_id, bot, delete=False), loop)
+                                    send_content(f"content/{username}-{shortcode}", telegram_id, bot, delete=False), loop)
                                 logger.info('🎉 Сообщение с постом отправлено')
                             else:
-                                logger.warning(f"Не удалось скачать контент {username}-{link}")
+                                logger.warning(f"Не удалось скачать контент {username}-{shortcode}")
                                 logger.debug()
                                 run_coroutine_threadsafe(
                                     bot.send_message(chat_id=telegram_id, text=f"Не удалось скачать [пост]({full_link}) от {username}", parse_mode="Markdown"), loop)
-                                del_dir(f'content/{username}-{link}')
+                                del_dir(f'content/{username}-{shortcode}')
                         except Exception as e:
-                            logger.error(f"Ошибка при скачивании {link}: {e}")
+                            logger.error(f"Ошибка при скачивании {shortcode}: {e}")
                             run_coroutine_threadsafe(
                                 bot.send_message(chat_id=telegram_id,
                                                  text=f"Не удалось скачать [пост]({full_link}) от {username}",
                                                  parse_mode="Markdown"), loop)
-                            del_dir(f'content/{username}-{link}')
+                            del_dir(f'content/{username}-{shortcode}')
                 except Exception as e:
-                    logger.error(f"Ошибка при скачивании {link}: {e}")
-                    del_dir(f'content/{username}-{link}')
+                    logger.error(f"Ошибка при скачивании {shortcode}: {e}")
+                    del_dir(f'content/{username}-{shortcode}')
 
         try:
             save_cookies(driver)
