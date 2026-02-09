@@ -21,6 +21,7 @@ services:
     volumes:
       - ./content:/app/content
       - ./ig_cookies.json:/app/ig_cookies.json
+      - ./profiles:app/profiles
 
   dozzle:
     image: amir20/dozzle:latest
