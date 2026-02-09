@@ -9,56 +9,28 @@ from telegram.ext import Application, CommandHandler
 import asyncio
 
 from bot import subscribe, unsubscribe, mysubscriptions, download
-from insta_process import insta_process, init_inta
+from insta_process import insta_process
 from logger import logger, logger_init
 
-
-def insta_worker(options, bot, loop):
-    while True:
-        driver = None
-        try:
-            driver = webdriver.Chrome(options=options)
-            init_inta(driver)
-            insta_process(driver, bot, loop)
-            # если insta_process завершилась нормально — выйдем из цикла
-            break
-        except Exception:
-            # Логируем полный стектрейс — это поможет понять причину падений
-            logger.exception("Неизвестная ошибка в insta_worker, перезапуск драйвера")
-            # Попытка аккуратно завершить драйвер, если он создан
-            try:
-                if driver:
-                    driver.quit()
-            except Exception:
-                pass
-            time.sleep(5)
-            continue
-        finally:
-            # В finally тоже закрываем драйвер, если он всё ещё жив
-            try:
-                if driver:
-                    driver.quit()
-            except Exception:
-                pass
 
 
 def main():
     logger_init()
     chrome_options = Options()
-    chrome_options.add_argument("--headless=new")
+    # chrome_options.add_argument("--headless=new")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--window-size=1920,1080")
     chrome_options.add_argument("--lang=en-US")
     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     chrome_options.add_argument(f'user-agent={user_agent}')
-    # Не создаём драйвер здесь — он создаётся внутри insta_worker
+    # Не создаём драйвер здесь — он создаётся внутри insta_process
     auth_token = os.getenv("TOKEN")
     application = Application.builder().token(auth_token).read_timeout(30).connect_timeout(30).build()
     loop = asyncio.get_event_loop()
 
     # Запускаем фоновый поток, который сам создаёт/рестартует драйвер внутри
-    thread_insta = threading.Thread(target=insta_worker, args=(chrome_options, application.bot, loop), daemon=True)
+    thread_insta = threading.Thread(target=insta_process, args=(chrome_options, application.bot, loop), daemon=True)
     thread_insta.start()
 
     application.add_handler(CommandHandler("subscribe", subscribe))

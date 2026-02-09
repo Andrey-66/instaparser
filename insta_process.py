@@ -3,6 +3,7 @@ import random
 from asyncio import run_coroutine_threadsafe
 from time import sleep
 
+from selenium import webdriver
 from selenium.common import TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
 
@@ -10,6 +11,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from bot import send_content
 from cooke import load_cookies, save_cookies
+from download_iqsaved import download_iqsaved
 from download_selenium import selenium_download
 from files_managment import load_profiles, get_directories_list, clean_and_check_user_dirs, \
     get_telegram_ids_by_username, folder_has_files, del_dir
@@ -51,7 +53,7 @@ def get_links(driver, username):
                 break
     return result
 
-def init_inta(driver):
+def init_insta(driver):
     open_page(driver, "https://www.instagram.com/")
     load_cookies(driver)
     reject_cookies(driver)
@@ -66,7 +68,7 @@ def get_full_link(shortcode, links):
     return ''
 
 
-def insta_process(driver, bot, loop):
+def insta_process(options, bot, loop):
     while True:
         try:
             profiles = load_profiles()
@@ -74,6 +76,9 @@ def insta_process(driver, bot, loop):
             logger.exception("Не удалось загрузить профили")
             sleep(60)
             continue
+        driver = webdriver.Chrome(options=options)
+        init_insta(driver)
+
         for username, _ in profiles:
             try:
                 links = get_links(driver, username)
@@ -91,9 +96,16 @@ def insta_process(driver, bot, loop):
                 continue
             except Exception as e:
                 logger.error(f"Ошибка при обработке ссылок для {username}: {e}")
+                telegram_ids = get_telegram_ids_by_username(username)
+                for telegram_id in telegram_ids:
+                    run_coroutine_threadsafe(
+                        bot.send_message(chat_id=telegram_id, text=f"Не смог загрузить ссылки для  {username}",
+                                         parse_mode="Markdown"), loop)
+
                 continue
             for link in to_download:
                 sleep_minutes = random.uniform(60, 240)
+                sleep_minutes /=60
                 logger.info(f"Спим {sleep_minutes / 60} минут перед скачиванием {link}")
                 sleep(sleep_minutes)
                 try:
@@ -131,6 +143,7 @@ def insta_process(driver, bot, loop):
         except Exception:
             logger.exception("Не удалось сохранить куки")
 
+        driver.quit()
         sleep_minutes = random.randint(90, 120)
         logger.info(f"Спим {sleep_minutes} минут перед следующей итерацией")
         sleep(sleep_minutes * 60)

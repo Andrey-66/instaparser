@@ -5,7 +5,10 @@ import time
 from time import sleep
 
 from selenium.webdriver.common.by import By
+
+from download_iqsaved import download_iqsaved
 from download_selenium_wire import download_instagram_video_via_network
+from files_managment import folder_has_files
 
 from open_page import open_page
 from logger import logger
@@ -179,6 +182,9 @@ def selenium_download(driver, url, save_dir=None):
         save_dir = f'content/{author_name}-{post_shortcode}'
     os.makedirs(save_dir, exist_ok=True)
     selenium_download_media(driver, url, save_dir)
+    if not folder_has_files(author_name, post_shortcode):
+        logger.warning('Загрузка через selenium не удалась')
+        download_iqsaved(driver, f'instagram.com/p/{post_shortcode}', save_dir=save_dir)
     files = glob.glob(os.path.join(save_dir, "*.mp4"))
     if files:
         get_text_preview(driver, author_url, post_shortcode, save_dir)
