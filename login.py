@@ -88,7 +88,6 @@ def new_login(driver, repeat=False):
     passwords = os.getenv("PASSWORDS").split(' ')
     secrets = os.getenv("SECRETS").split(' ')
     random_num = randint(0, len(emails) - 1)
-    random_num = 2
     email=emails[random_num]
     password = passwords[random_num]
     secret = secrets[random_num]
