@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 from contextlib import suppress
 from typing import Optional
@@ -37,7 +38,7 @@ def clean_and_check_user_dirs(username, expected_dirs, root="."):
         if d not in expected_dirs:
             full_path = os.path.join(root, d)
             try:
-                shutil.rmtree(full_path)
+                del_dir(full_path)
                 logger.info(f"🗑️ Удалена лишняя директория: {d}")
             except Exception as e:
                 logger.info(f"❌ Не удалось удалить {d}: {e}")
@@ -50,6 +51,26 @@ def clean_and_check_user_dirs(username, expected_dirs, root="."):
             missing.append(shortcode)
 
     return missing
+
+
+def clean_old_dirs(profiles, root='.'):
+    """
+    Удаляет лишние директории username-*, которые не входят в profiles.
+    """
+    profiles_list = set()
+    for profile in profiles:
+        profiles_list.add(profile[0])
+    pattern = r'.*-.*'
+    actual_dirs = [d for d in os.listdir(root)
+                   if os.path.isdir(os.path.join(root, d)) and re.fullmatch(pattern, d)]
+    to_delete = []
+    for d in actual_dirs:
+        username = d.split("-")[0]
+        if username not in profiles_list:
+            to_delete.append(d)
+    for d in to_delete:
+        full_path = os.path.join(root, d)
+        del_dir(full_path)
 
 
 def get_telegram_ids_by_username(username, filepath="profiles"):

@@ -13,7 +13,7 @@ from bot import send_content
 from cooke import load_cookies, save_cookies
 from download_selenium import selenium_download
 from files_managment import load_profiles, get_directories_list, clean_and_check_user_dirs, \
-    get_telegram_ids_by_username, folder_has_files, del_dir
+    get_telegram_ids_by_username, folder_has_files, del_dir, clean_old_dirs
 from insta_download import get_content
 from logger import logger
 from login import check_login
@@ -75,6 +75,7 @@ def insta_process(options, bot, loop):
             logger.exception("Не удалось загрузить профили")
             sleep(60)
             continue
+        clean_old_dirs(profiles, 'content')
         driver = webdriver.Chrome(options=options)
         init_insta(driver)
 
