@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Вход в админку</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;padding:2rem}
+    .container{max-width:420px;margin:0 auto}
+    .flash{padding:.5rem;border-radius:4px;margin-bottom:.5rem}
+    .flash.error{background:#fdecea;color:#611a15}
+    label{display:block;margin-top:.5rem}
+    input{width:100%;padding:.45rem;margin-top:.25rem}
+    button{margin-top:1rem;padding:.5rem .75rem}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Вход</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="flash {{ category }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('auth.login') }}">
+      {{ form.hidden_tag() }}
+      {# передаём next, если есть в args #}
+      {% if request.args.get('next') %}
+        <input type="hidden" name="next" value="{{ request.args.get('next') }}">
+      {% endif %}
+
+      <label for="{{ form.username.id }}">Username</label>
+      {{ form.username(id=form.username.id) }}
+      {% if form.username.errors %}
+        <div class="flash error">{{ form.username.errors[0] }}</div>
+      {% endif %}
+
+      <label for="{{ form.password.id }}">Password</label>
+      {{ form.password(id=form.password.id) }}
+      {% if form.password.errors %}
+        <div class="flash error">{{ form.password.errors[0] }}</div>
+      {% endif %}
+
+      <button type="submit">Войти</button>
+    </form>
+  </div>
+</body>
+</html>
