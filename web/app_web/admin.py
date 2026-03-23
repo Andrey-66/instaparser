@@ -28,6 +28,7 @@ def setup_admin():
     from app_web.models import Subscription
     admin.add_view(BaseAdminView(Subscription, database.session))
     from app_web.models import Post
-    admin.add_view(BaseAdminView(Post, database.session))
+    from app_web.admins.post import PostAdminView
+    admin.add_view(PostAdminView(Post, database.session))
     from app_web.models import TelegramUser
     admin.add_view(BaseAdminView(TelegramUser, database.session))
