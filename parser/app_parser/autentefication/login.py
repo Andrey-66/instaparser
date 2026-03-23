@@ -61,7 +61,8 @@ def login(driver, retry=False):
     if not secret:
         logger.error(f"Environment variable SECRETS is empty for {email}. Please check your .env file.")
         raise EnvironmentError(f"Environment variable PASSWORDS is empty for {email}. Please check your .env file.")
-    logger.info(email, password, secrets)
+    logger.info(str(email), str(password), str(secret))
+    logger.info(str(emails), str(passwords), str(secrets))
     wait = WebDriverWait(driver, 10)
     email_xpath_selector = """
         //input[contains(@aria-label, 'Mobile') or contains(@aria-label, 'username') or contains(@aria-label, 'email')] |
