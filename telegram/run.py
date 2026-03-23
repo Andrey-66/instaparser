@@ -56,12 +56,12 @@ async def background_monitoring(context):
                     logger.info(f'Sending {link} to {telegram_id}')
                     if media_type == 'reel':
                         await bot.send_message(chat_id=telegram_id,
-                                             text=f"[Рилс]({link}) от {instagram_profile_username}",
-                                             parse_mode="Markdown")
+                                               text=f"<a href='{link}'>Рилс</a> от {instagram_profile_username}",
+                                               parse_mode="HTML")
                     else:
                         await bot.send_message(chat_id=telegram_id,
-                                             text=f"[Пост]({link}) от {instagram_profile_username}",
-                                             parse_mode="Markdown")
+                                               text=f"<a href='{link}'>Пост</a> от {instagram_profile_username}",
+                                               parse_mode="HTML")
 
                     await send_content(file, telegram_id, bot)
                     delete_directory(file)
