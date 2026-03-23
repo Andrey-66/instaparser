@@ -1,28 +1,86 @@
 version: '3.8'
 
 services:
-  bot:
-    build: .
-    container_name: instaparser_bot
-    restart: always
-    shm_size: '2gb'
-    healthcheck:
-      test: [ "CMD-SHELL", "if [ $(expr $(date +%s) - $(stat -c %Y /proc/1)) -gt 18000 ]; then exit 1; else exit 0; fi" ]
-      interval: 1m
-      timeout: 10s
-      retries: 1
-      start_period: 10s
-    env_file: .env
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+  # ============= PostgreSQL =============
+  postgres-db:
+    image: postgres:16
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: instauser
+      POSTGRES_PASSWORD: instapass
+      POSTGRES_DB: instadb
     volumes:
-      - ./content:/app/content
-      - ./ig_cookies.json:/app/ig_cookies.json
-      - ./profiles:/app/profiles
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U instauser -d instadb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
 
+  # ============= Flask API (web) =============
+  flask-api:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - SQLALCHEMY_DATABASE_URI=postgresql://instauser:instapass@postgres-db:5432/instadb
+      - FLASK_APP=app_web.app
+      - INITIAL_ADMIN_PASSWORD
+      - SECRET_KEY
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    volumes:
+      - ./content:/content
+      - ./web/migrations:/app/migrations
+    networks:
+      - backend
+    command: ["python", "run.py"]
+
+  # ============= Parser =============
+  parser:
+    build:
+      context: ./parser
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - URL=http://flask-api:5000
+      - EMAILS
+      - PASSWORDS
+      - SECRETS
+    depends_on:
+      - flask-api
+    volumes:
+      - ./content:/content
+    networks:
+      - backend
+
+  # ============= Telegram Bot =============
+  telegram-bot:
+    build:
+      context: ./telegram
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      - TOKEN
+      - URL=http://flask-api:5000
+    depends_on:
+      - flask-api
+    volumes:
+      - ./content:/content
+    networks:
+      - backend
+
+  # ============= Dozzle =============
   dozzle:
     image: amir20/dozzle:latest
     container_name: dozzle
@@ -35,8 +93,17 @@ services:
       - source: users
         target: /data/users.yml
     ports:
-      - 8080:8080  # Логи будут доступны по адресу http://IP-сервера:8080
+      - "8080:8080"
+    networks:
+      - backend
     restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+    driver: bridge
 
 secrets:
   users:

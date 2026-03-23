@@ -55,3 +55,7 @@ content/
 *.png
 session*
 temp*.py
+ig_cookies.json
+alembic.ini
+users.yml
+profiles

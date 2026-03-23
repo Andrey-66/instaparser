@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: instaparser_bot
+    restart: always
+    shm_size: '2gb'
+    healthcheck:
+      test: [ "CMD-SHELL", "if [ $(expr $(date +%s) - $(stat -c %Y /proc/1)) -gt 18000 ]; then exit 1; else exit 0; fi" ]
+      interval: 1m
+      timeout: 10s
+      retries: 1
+      start_period: 10s
+    env_file: .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./content:/app/content
+      - ./ig_cookies.json:/app/ig_cookies.json
+      - ./profiles:/app/profiles
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOZZLE_AUTH_PROVIDER=simple
+      - DOZZLE_ENABLE_ACTIONS=true
+    secrets:
+      - source: users
+        target: /data/users.yml
+    ports:
+      - 8080:8080  # Логи будут доступны по адресу http://IP-сервера:8080
+    restart: unless-stopped
+
+secrets:
+  users:
+    file: users.yml
