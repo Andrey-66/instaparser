@@ -49,6 +49,7 @@ async def background_monitoring(context):
                 media_type = post.get('media_type')
                 post_id = post.get('id')
                 telegram_ids = instagram_profile.get("telegram_ids")
+                logger.info(f'Sending post {link}')
                 if not folder_has_files(file):
                     logger.error(f'Folder {file} is empty or does not exist')
                     delete_directory(file)
@@ -66,7 +67,8 @@ async def background_monitoring(context):
                                                parse_mode="HTML")
 
                     await send_content(file, telegram_id, bot)
-                    delete_directory(file)
+                    logger.info(f'Successfully sent post to {telegram_id}')
+                delete_directory(file)
                 update_post(post_id, is_sent=True, sent_at=datetime.now().isoformat(), sent_to=', '.join(telegram_ids))
                 time.sleep(3)
             except Exception as e:
