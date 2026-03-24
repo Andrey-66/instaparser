@@ -46,12 +46,14 @@ async def background_monitoring(context):
                 link = post.get('instagram_post_id')
                 file = post.get('file_path')
                 file = '../'+file
-                if not folder_has_files(file):
-                    logger.error(f'Folder {file} is empty or does not exist')
-                    continue
                 media_type = post.get('media_type')
                 post_id = post.get('id')
                 telegram_ids = instagram_profile.get("telegram_ids")
+                if not folder_has_files(file):
+                    logger.error(f'Folder {file} is empty or does not exist')
+                    delete_directory(file)
+                    update_post(post_id, is_sent=False, is_downloaded=False)
+                    continue
                 for telegram_id in telegram_ids:
                     logger.info(f'Sending {link} to {telegram_id}')
                     if media_type == 'reel':
