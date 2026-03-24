@@ -45,15 +45,15 @@ def update_post(post_id,
                 file_path=None,
                 errors_count=None):
     payload = {}
-    if is_sent:
+    if is_sent is not None:
         payload['is_sent'] = is_sent
-    if sent_at:
+    if sent_at is not None:
         payload['sent_at'] = sent_at
-    if sent_to:
+    if sent_to is not None:
         payload['sent_to'] = sent_to
-    if is_downloaded:
+    if is_downloaded is not None:
         payload['is_downloaded'] = is_downloaded
-    if file_path:
+    if file_path is not None:
         payload['file_path'] = file_path
     if errors_count is not None:
         payload['errors_count'] = errors_count
