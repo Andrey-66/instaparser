@@ -64,6 +64,12 @@ class InstagramParser:
                         media_type='reel',
                     )
                 update_profile(profile_name, errors_count=0)
+            except TimeoutException as e:
+                logger.warning('Driver timeout, restarting...')
+                if self.driver:
+                    driver_manager.quit_driver()
+                time.sleep(5)
+                self.driver = driver_manager.get_driver()
             except Exception as e:
                 logger.error(f"Failed to parse profiles: {e}")
                 profile = get_profile(profile_name)
@@ -80,6 +86,7 @@ class InstagramParser:
             time.sleep(2)
         except (TimeoutException, WebDriverException) as e:
             logger.error(f"Ошибка прокрутки для {url}: {e}")
+            raise
 
         links = self.driver.find_elements(By.XPATH, "//a[@href]")
         i = 0
@@ -109,23 +116,37 @@ class InstagramParser:
             shortcode = url.split("/")[-2]
             username = post.get('profile_username')
             folder = f"../content/{username}-{shortcode}"
-            if instaloader_download(shortcode, folder):
-                update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
-                continue
-            author_url = f'https://www.instagram.com/{author_name}/'
-            if media_type == 'reel':
-                if iqsaved_download(self.driver, shortcode, author_url, folder):
+            try:
+                if instaloader_download(shortcode, folder):
                     update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
                     continue
-                if selenium_download(self.driver, url, folder, author_name):
-                    update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
-                    continue
-            else:
-                if selenium_download(self.driver, url, folder, author_name):
-                    update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
-                    continue
-                if iqsaved_download(self.driver, shortcode, author_url, folder):
-                    update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
-                    continue
-            delete_directory(folder)
-            update_post(post.get('id'), is_downloaded=False, errors_count=errors_count+1)
+                author_url = f'https://www.instagram.com/{author_name}/'
+                if media_type == 'reel':
+                    if iqsaved_download(self.driver, shortcode, author_url, folder):
+                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        continue
+                    if selenium_download(self.driver, url, folder, author_name):
+                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        continue
+                else:
+                    if selenium_download(self.driver, url, folder, author_name):
+                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        continue
+                    if iqsaved_download(self.driver, shortcode, author_url, folder):
+                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        continue
+                delete_directory(folder)
+                update_post(post.get('id'), is_downloaded=False, errors_count=errors_count+1)
+            except TimeoutException as e:
+                delete_directory(folder)
+                update_post(post.get('id'), is_downloaded=False, errors_count=errors_count + 1)
+                logger.warning('Driver timeout, restarting...')
+                logger.warning(f'Skipping post {url}')
+                if self.driver:
+                    driver_manager.quit_driver()
+                time.sleep(5)
+                self.driver = driver_manager.get_driver()
+            except Exception as e:
+                logger.error(f"Failed to parse posts: {e}")
+                delete_directory(folder)
+                update_post(post.get('id'), is_downloaded=False, errors_count=errors_count + 1)

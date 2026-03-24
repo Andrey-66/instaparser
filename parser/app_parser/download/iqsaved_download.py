@@ -5,6 +5,7 @@ import random
 import time
 
 import requests
+from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 
 from app_parser.download.selenium_download import get_text_preview
@@ -82,6 +83,8 @@ def iqsaved_download(driver, post_shortcode, author_url, dir_path=None):
             get_text_preview(driver, author_url, post_shortcode, dir_path, False)
         time.sleep(5)
         return True
+    except TimeoutException as e:
+        raise e
     except Exception as e:
         logger.error(f"Error while getting post: {e}")
         return False

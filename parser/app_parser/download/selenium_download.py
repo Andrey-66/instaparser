@@ -4,6 +4,7 @@ import os
 import time
 from random import uniform
 
+from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 
 from app_parser.download.selenium_wire_download import download_instagram_video_via_network
@@ -169,6 +170,8 @@ def selenium_download(driver, url, save_dir, author_name):
         if not folder_has_files(save_dir):
             logger.warning('Download via selenium failed')
             return False
+    except TimeoutException as e:
+        raise e
     except Exception as e:
         logger.warning(f'Download via selenium failed: {e}')
     if not folder_has_files(save_dir):

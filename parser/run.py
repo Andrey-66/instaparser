@@ -32,7 +32,7 @@ def main():
     logger = logging.getLogger(__name__)
     while True:
         try:
-            logger.info("Starting parser test...")
+            logger.info("Starting parser...")
             with InstagramParser(limit=10) as parser:
                 profiles = get_profiles()
                 profiles_names = []
@@ -45,7 +45,7 @@ def main():
             logger.info(f"Спим {sleep_minutes} минут перед следующей итерацией")
             time.sleep(sleep_minutes * 60)
         except Exception as e:
-            logger.error(f"Parser test failed: {e}")
+            logger.error(f"Parser failed: {e}")
 
 
 if __name__ == "__main__":
