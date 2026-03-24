@@ -14,9 +14,15 @@ async def send_content(directory, telegram_id, bot):
     txt_files = [f for f in files if f.lower().endswith(".txt")]
 
     caption = ""
+    separate_caption = ''
     if txt_files:
         with open(os.path.join(directory, txt_files[0]), "r", encoding="utf-8") as f:
             caption = f.read().strip()
+
+    if len(caption) >= 1000:
+        separate_caption = caption
+        caption = ""
+    media = []
 
     media = []
     for f in jpg_files:
@@ -24,10 +30,10 @@ async def send_content(directory, telegram_id, bot):
     for f in mp4_files:
         media.append(InputMediaVideo(open(os.path.join(directory, f), "rb")))
 
-    # if not media:
-    #     await bot.send_message(chat_id=telegram_id, text="⚠️ Контент не найден.")
-    #     delete_directory(directory)
-    #     return
+    if not media:
+        # await bot.send_message(chat_id=telegram_id, text="⚠️ Контент не найден.")
+        delete_directory(directory)
+        return
 
     if len(media) == 1:
         m = media[0]
@@ -46,3 +52,9 @@ async def send_content(directory, telegram_id, bot):
         for m in media:
             await bot.send_media_group(chat_id=telegram_id, media=m, caption=caption)
             logger.info(f'Отправлено {len(m)} медиа')
+    if separate_caption:
+        for i in range(0, len(caption), 4000):
+            part = caption[i:i + 4000]
+            await bot.send_message(chat_id=telegram_id, text=part)
+            logger.info(f'Отправил часть описания отдельно:\n{part}')
+
