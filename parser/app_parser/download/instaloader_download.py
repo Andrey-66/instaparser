@@ -16,7 +16,6 @@ def instaloader_download(shortcode, folder):
     try:
         post = Post.from_shortcode(L.context, shortcode)
         L.download_post(post, target=content_folder)
-        logger.info(f"Instaloader download success for {shortcode}")
         return move_directory(content_folder, folder)
     except Exception as e:
         logger.warning(f"Error while instaloader downloading {shortcode}: {e}")

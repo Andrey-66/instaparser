@@ -118,22 +118,27 @@ class InstagramParser:
             folder = f"../content/{username}-{shortcode}"
             try:
                 if instaloader_download(shortcode, folder):
+                    logger.info(f"Instaloader download success for {shortcode}")
                     update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
                     continue
                 author_url = f'https://www.instagram.com/{author_name}/'
                 if media_type == 'reel':
                     if iqsaved_download(self.driver, shortcode, author_url, folder):
                         update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        logger.info(f"Iqsaved download success for {shortcode}")
                         continue
                     if selenium_download(self.driver, url, folder, author_name):
                         update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        logger.info(f"Selenium download success for {shortcode}")
                         continue
                 else:
                     if selenium_download(self.driver, url, folder, author_name):
                         update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        logger.info(f"Selenium download success for {shortcode}")
                         continue
                     if iqsaved_download(self.driver, shortcode, author_url, folder):
                         update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        logger.info(f"Iqsaved download success for {shortcode}")
                         continue
                 delete_directory(folder)
                 update_post(post.get('id'), is_downloaded=False, errors_count=errors_count+1)
