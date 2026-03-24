@@ -53,8 +53,8 @@ async def send_content(directory, telegram_id, bot):
             await bot.send_media_group(chat_id=telegram_id, media=m, caption=caption)
             logger.info(f'Отправлено {len(m)} медиа')
     if separate_caption:
-        for i in range(0, len(caption), 4000):
-            part = caption[i:i + 4000]
+        for i in range(0, len(separate_caption), 4000):
+            part = separate_caption[i:i + 4000]
             await bot.send_message(chat_id=telegram_id, text=part)
             logger.info(f'Отправил часть описания отдельно:\n{part}')
 
