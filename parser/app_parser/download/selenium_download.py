@@ -140,8 +140,8 @@ def get_text_preview(driver, author_url, post_shortcode, save_dir, download_prev
                 img_tag = link.find_element(By.TAG_NAME, "img")
                 caption = img_tag.get_attribute("alt")
                 img_src = img_tag.get_attribute("src")
-                logger.debug(f"✅ Find description: {caption}")
-                logger.debug(f"🖼️ Link to preview: {img_src}")
+                logger.info(f"✅ Find description: {caption}")
+                logger.info(f"🖼️ Link to preview: {img_src}")
                 file_path = os.path.join(save_dir, f"text_{int(time.time_ns())}.txt")
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(caption)
