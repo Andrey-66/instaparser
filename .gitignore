@@ -59,3 +59,4 @@ ig_cookies.json
 alembic.ini
 users.yml
 profiles
+/chrome-win64/
