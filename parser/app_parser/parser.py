@@ -122,6 +122,7 @@ class InstagramParser:
 
     def get_stories(self, profile_name):
         open_page(self.driver, f'https://www.instagram.com/stories/{profile_name}/', 'get_stories')
+        time.sleep(1)
         current_url = self.driver.current_url
         if current_url != f'https://www.instagram.com/stories/{profile_name}/':
             logger.info(f'No stories for {profile_name}')
@@ -133,7 +134,7 @@ class InstagramParser:
             view_story_button.click()
             logger.info("✅ Button 'View story' pressed")
         except TimeoutException:
-            logger.info("ℹ️ Button 'View story' not detected")
+            logger.info(f"ℹ️ Button 'View story' not detected: {self.driver.current_url}")
         except Exception as e:
             logger.info(f"❌ Error while pressing button: {e}")
             return []
