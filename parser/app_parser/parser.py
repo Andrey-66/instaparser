@@ -162,7 +162,7 @@ class InstagramParser:
                 view_story_button.click()
                 logger.info("✅ Button 'View story' pressed")
             except TimeoutException:
-                logger.info("ℹ️ Button 'View story' not detected")
+                logger.info(f"ℹ️ Button 'View story' not detected: {self.driver.current_url}")
             except Exception as e:
                 logger.info(f"❌ Error while pressing button: {e}")
                 return []
@@ -195,7 +195,6 @@ class InstagramParser:
                 return []
             open_page(self.driver, 'https://www.instagram.com/direct/t/18016020287648589/', 'get_stories')
             time.sleep(5)
-            links = self.driver.find_elements(By.TAG_NAME, "a")
             with suppress(TimeoutException):
                 not_now_button = WebDriverWait(self.driver, 5).until(
                     EC.element_to_be_clickable((By.XPATH, "//button[text()='Not Now']"))
@@ -203,6 +202,8 @@ class InstagramParser:
                 not_now_button.click()
                 logger.info("✅ 'Not Now' button clicked")
             story_urls = []
+            time.sleep(5)
+            links = self.driver.find_elements(By.TAG_NAME, "a")
             for link in links:
                 href = link.get_attribute("href")
                 if href and re.match(pattern, href):
