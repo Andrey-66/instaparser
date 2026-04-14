@@ -173,7 +173,7 @@ class InstagramParser:
                     time.sleep(0.2)
                     actions.send_keys(Keys.TAB).perform()
                     focused_element = self.driver.switch_to.active_element
-                    if not self.driver.current_url.startwith(f'https://www.instagram.com/stories/{profile_name}/'):
+                    if not self.driver.current_url.startswith(f'https://www.instagram.com/stories/{profile_name}/'):
                         return []
                 focused_element.click()
                 time.sleep(3)
