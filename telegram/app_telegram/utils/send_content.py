@@ -22,7 +22,6 @@ async def send_content(directory, telegram_id, bot):
     if len(caption) >= 1000:
         separate_caption = caption
         caption = ""
-    media = []
 
     media = []
     for f in jpg_files:
@@ -57,4 +56,3 @@ async def send_content(directory, telegram_id, bot):
             part = separate_caption[i:i + 4000]
             await bot.send_message(chat_id=telegram_id, text=part)
             logger.info(f'Отправил часть описания отдельно:\n{part}')
-

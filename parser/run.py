@@ -1,5 +1,7 @@
+import os
 import random
 import time
+from http.cookiejar import debug
 from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
@@ -30,10 +32,15 @@ def main():
     load_dotenv()
     setup_logging()
     logger = logging.getLogger(__name__)
+    debug = os.getenv("DEBUG")
+    if not debug or debug == 'False':
+        debug = False
+    else:
+        debug = True
     while True:
         try:
             logger.info("Starting parser...")
-            with InstagramParser(limit=10) as parser:
+            with InstagramParser(limit=10, debug=debug) as parser:
                 profiles = get_profiles()
                 profiles_names = []
                 for profile in profiles:

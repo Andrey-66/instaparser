@@ -209,3 +209,23 @@ def update_post(post_id):
     except Exception as e:
         database.session.rollback()
         return jsonify({'error': f'Failed to update post: {str(e)}'}), 500
+
+
+@router.route('/posts/<int:post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    """Удаление подписки по ID"""
+    try:
+        post = Post.query.filter_by(id=post_id).first()
+
+        if not post:
+            return jsonify({'error': 'Post not found'}), 404
+
+        database.session.delete(post)
+        database.session.commit()
+
+        return jsonify({'message': 'Post deleted successfully'}), 200
+
+    except Exception as e:
+        database.session.rollback()
+        logger.error(f"Error deleting post {post_id}: {e}")
+        return jsonify({'error': 'Failed to delete post'}), 500

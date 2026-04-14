@@ -6,6 +6,8 @@ from random import uniform
 
 from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from app_parser.download.selenium_wire_download import download_instagram_video_via_network
 from app_parser.utils.files import folder_has_files
@@ -191,3 +193,36 @@ def selenium_download(driver, url, save_dir, author_name):
         return True
     except Exception as e:
         return False
+
+
+def selenium_story_download(driver, url, save_dir):
+    open_page(driver, url, 'selenium_story_download')
+    time.sleep(1)
+    try:
+        view_story_button = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.XPATH, "//div[contains(text(), 'View story')]"))
+        )
+        view_story_button.click()
+        logger.info("✅ Button 'View story' pressed")
+    except TimeoutException:
+        logger.info("ℹ️ Button 'View story' not detected")
+    except Exception as e:
+        logger.info(f"❌ Error while pressing button: {e}")
+        return False
+    time.sleep(1)
+    all_imgs = driver.find_elements(By.TAG_NAME, "img")
+    for img in all_imgs:
+        try:
+            size = driver.execute_script(
+                "return {w: arguments[0].naturalWidth, h: arguments[0].naturalHeight};",
+                img
+            )
+
+            src = img.get_attribute("src")
+            if src and size['w'] > 400:
+                os.makedirs(save_dir, exist_ok=True)
+                selenium_save_image(driver, src, f"{save_dir}/image.jpg")
+                return True
+        except Exception as e:
+            continue
+    return False

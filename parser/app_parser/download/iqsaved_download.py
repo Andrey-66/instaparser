@@ -14,10 +14,25 @@ from app_parser.utils.selenium_utils import open_page
 logger = logging.getLogger(__name__)
 
 
-def iqsaved_download(driver, post_shortcode, author_url, dir_path=None):
+def post_iqsaved_download(driver, post_shortcode, author_url, dir_path=None):
+    url = f'https://iqsaved.com/download-posts/{post_shortcode}/'
+    if not iqsaved_download(driver, url, dir_path):
+        return False
+    files = glob.glob(os.path.join(dir_path, "*.mp4"))
+    if files:
+        get_text_preview(driver, author_url, post_shortcode, dir_path)
+    else:
+        get_text_preview(driver, author_url, post_shortcode, dir_path, False)
+    time.sleep(5)
+    return True
+def story_iqsaved_download(driver, story_shortcode, author_name, dir_path=None):
+    url = f'https://iqsaved.com/ru/download-stories/{author_name}-{story_shortcode}/'
+    return iqsaved_download(driver, url, dir_path)
+
+def iqsaved_download(driver, url, dir_path=None):
     try:
-        logger.info(f'Iqsaved download {post_shortcode}')
-        open_page(driver, f'https://iqsaved.com/download-posts/{post_shortcode}/', __name__)
+        logger.info(f'Iqsaved download {url}')
+        open_page(driver, url, __name__)
         time.sleep(random.uniform(3, 6))
         driver.execute_script("window.scrollBy(0, 500);")
         time.sleep(random.uniform(1, 3))
@@ -44,6 +59,8 @@ def iqsaved_download(driver, post_shortcode, author_url, dir_path=None):
         for i, elem in enumerate(video_elements):
             try:
                 link_info = elem.get_attribute('href')
+                if link_info.startswith('https://iqsaved.com/'):
+                    continue
                 video_links.append(link_info)
             except Exception as e:
                 logger.error(f"Error while getting video url {i + 1}: {e}")
@@ -53,6 +70,8 @@ def iqsaved_download(driver, post_shortcode, author_url, dir_path=None):
         for i, elem in enumerate(photo_elements):
             try:
                 link_info = elem.get_attribute('href')
+                if link_info.startswith('https://iqsaved.com/'):
+                    continue
                 photo_links.append(link_info)
             except Exception as e:
                 logger.error(f"Error while getting photo url {i + 1}: {e}")
@@ -76,12 +95,6 @@ def iqsaved_download(driver, post_shortcode, author_url, dir_path=None):
                     f.write(chunk)
             logger.info(f"✅ Video saved successfully in: {file_path}")
             time.sleep(5)
-        files = glob.glob(os.path.join(dir_path, "*.mp4"))
-        if files:
-            get_text_preview(driver, author_url, post_shortcode, dir_path)
-        else:
-            get_text_preview(driver, author_url, post_shortcode, dir_path, False)
-        time.sleep(5)
         return True
     except TimeoutException as e:
         raise e

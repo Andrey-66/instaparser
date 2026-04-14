@@ -114,3 +114,14 @@ def update_post(post_id,
         return False
     logger.info(f"Updated post {post_id}")
     return True
+
+
+def delete_post(post_id):
+    try:
+        post = requests.delete(f'{URL}/api/posts/{post_id}')
+        if post.status_code == 200:
+            return True
+        return False
+    except Exception as e:
+        logger.error(f"Error deleting post: {e}")
+        return False

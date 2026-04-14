@@ -4,10 +4,6 @@ import json
 import pickle
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, WebDriverException
 import logging
 
 from app_parser.autentefication.cooke import load_cookies, save_cookies
@@ -22,11 +18,10 @@ class DriverManager:
         self.cookies_file = "instagram_cookies.pkl"
         self.base_url = "https://www.instagram.com"
 
-    def create_driver(self):
+    def create_driver(self, debug=False):
         """Создает новый экземпляр драйвера"""
         chrome_options = Options()
 
-        chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--window-size=1920,1080")
@@ -45,6 +40,10 @@ class DriverManager:
         chrome_options.add_argument("--allow-running-insecure-content")
 
         try:
+            if debug:
+                chrome_options.binary_location = 'E:\projects\instaparser\chrome-win64\chrome.exe'
+            else:
+                chrome_options.add_argument("--headless=new")
             self.driver = webdriver.Chrome(options=chrome_options)
             self.driver.set_page_load_timeout(30)
             self.driver.implicitly_wait(10)
@@ -132,10 +131,10 @@ class DriverManager:
             logger.error(f"Authentication failed: {e}")
             return False
 
-    def get_driver(self):
+    def get_driver(self, debug=False):
         """Получает готовый к работе драйвер"""
         try:
-            self.create_driver()
+            self.create_driver(debug)
             self.authenticate()
             return self.driver
         except Exception as e:

@@ -61,10 +61,16 @@ async def background_monitoring(context):
                         await bot.send_message(chat_id=telegram_id,
                                                text=f"<a href='{link}'>Рилс</a> от {instagram_profile_username}",
                                                parse_mode="HTML")
-                    else:
+                    elif media_type == 'post':
                         await bot.send_message(chat_id=telegram_id,
                                                text=f"<a href='{link}'>Пост</a> от {instagram_profile_username}",
                                                parse_mode="HTML")
+                    elif media_type == 'story':
+                        await bot.send_message(chat_id=telegram_id,
+                                               text=f"<a href='{link}'>История</a> от {instagram_profile_username}",
+                                               parse_mode="HTML")
+                    else:
+                        continue
 
                     await send_content(file, telegram_id, bot)
                     logger.info(f'Successfully sent post to {telegram_id}')
