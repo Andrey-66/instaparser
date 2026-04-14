@@ -223,7 +223,6 @@ class InstagramParser:
     def parse_posts(self, posts):
         for post in posts:
             sleep_minutes = uniform(60, 240)
-            sleep_minutes /= 60
             logger.info(f"Sleep {sleep_minutes / 60} minutes")
             time.sleep(sleep_minutes)
             url = post.get('instagram_post_id')
