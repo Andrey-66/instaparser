@@ -170,11 +170,15 @@ class InstagramParser:
             actions.send_keys(Keys.TAB).perform()
             focused_element = None
             try:
+                tab_counter = 0
                 while not focused_element or focused_element.accessible_name != 'Direct':
                     time.sleep(0.2)
                     actions.send_keys(Keys.TAB).perform()
                     focused_element = self.driver.switch_to.active_element
                     if not self.driver.current_url.startswith(f'https://www.instagram.com/stories/{profile_name}/'):
+                        return []
+                    tab_counter += 1
+                    if tab_counter >= 50:
                         return []
                 focused_element.click()
                 time.sleep(3)
