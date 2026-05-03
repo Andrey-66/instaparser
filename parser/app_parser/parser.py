@@ -47,8 +47,8 @@ class InstagramParser:
                 profile = get_profile(profile_name)
                 existed_posts = get_posts(profile_id=profile.get('id'))
                 existed_posts_ids = [post['instagram_post_id'] for post in existed_posts]
-                posts = self.get_links(f'https://instagram.com/{profile_name}/', limit, exclude='/reel/')
-                reels = self.get_links(f'https://instagram.com/{profile_name}/reels', limit, exclude='/p/')
+                posts = self.get_links(f'https://instagram.com/{profile_name}/', limit, profile_name, exclude='/reel/')
+                reels = self.get_links(f'https://instagram.com/{profile_name}/reels', limit, profile_name, exclude='/p/')
                 logger.info(f"{profile_name} posts: {posts} reels: {reels}")
                 if not profile:
                     raise
@@ -94,8 +94,17 @@ class InstagramParser:
                 update_profile(profile_name, errors_count=profile.get('errors_count')+1)
                 raise
 
-    def get_links(self, url, limit, exclude=''):
+    def get_links(self, url, limit, profile_name, exclude=''):
+        open_page(self.driver, 'about:blank', __name__)
+        time.sleep(2)
         open_page(self.driver, url, __name__)
+        try:
+            WebDriverWait(self.driver, 15).until(
+                lambda driver: profile_name in driver.current_url
+            )
+        except TimeoutException:
+            logger.error(f"Инстаграм не пустил на профиль {profile_name} (URL: {self.driver.current_url})")
+            raise
         time.sleep(10)
         try:
             self.driver.execute_script("window.scrollBy(0, 500);")
