@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-COOKIES_FILE = "ig_cookies.json"
+COOKIES_FILE = "/content/ig_cookies.json"
 BASE_URL = "https://www.instagram.com/"
 
 def normalize_cookie(cookie):

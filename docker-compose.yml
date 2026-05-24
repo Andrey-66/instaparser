@@ -17,6 +17,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
     networks:
       - backend
 
@@ -40,6 +41,7 @@ services:
     volumes:
       - ./content:/content
       - ./web/migrations:/app/migrations
+    restart: unless-stopped
     networks:
       - backend
     command: ["python", "run.py"]
@@ -60,8 +62,10 @@ services:
       - flask-api
     volumes:
       - ./content:/content
+    restart: on-failure
     networks:
       - backend
+    command: ["sh", "/app/restart_wrapper.sh"]
 
   # ============= Telegram Bot =============
   telegram-bot:
@@ -77,6 +81,7 @@ services:
       - flask-api
     volumes:
       - ./content:/content
+    restart: unless-stopped
     networks:
       - backend
 
