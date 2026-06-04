@@ -18,15 +18,16 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    stop_grace_period: 60s
     networks:
       - backend
     command: >
       postgres
-      -c shared_buffers=32MB
-      -c max_connections=50
-      -c work_mem=2MB
-      -c maintenance_work_mem=32MB
-      -c effective_cache_size=128MB
+      -c shared_buffers=16MB
+      -c max_connections=10
+      -c work_mem=1MB
+      -c maintenance_work_mem=16MB
+      -c effective_cache_size=64MB
 
   # ============= Flask API (web) =============
   flask-api:
