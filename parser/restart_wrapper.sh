@@ -15,4 +15,11 @@ else
     echo 3600 > "$DELAY_FILE"
 fi
 
-exec python run.py
+python run.py
+EXIT_CODE=$?
+
+if [ "$EXIT_CODE" -eq 0 ]; then
+    rm -f "$DELAY_FILE"
+fi
+
+exit "$EXIT_CODE"
