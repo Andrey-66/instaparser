@@ -135,7 +135,8 @@ class DriverManager:
         """Получает готовый к работе драйвер"""
         try:
             self.create_driver(debug)
-            self.authenticate()
+            if not self.authenticate():
+                raise Exception("Instagram authentication failed")
             return self.driver
         except Exception as e:
             logger.error(f"Failed to get driver: {e}")
