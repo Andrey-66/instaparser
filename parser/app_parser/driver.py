@@ -3,8 +3,6 @@ import secrets
 import string
 import subprocess
 import time
-import json
-import pickle
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import logging
@@ -18,7 +16,6 @@ logger = logging.getLogger(__name__)
 class DriverManager:
     def __init__(self):
         self.driver = None
-        self.cookies_file = "instagram_cookies.pkl"
         self.base_url = "https://www.instagram.com"
         self._xvfb_proc = None
         self._vnc_proc = None
@@ -58,51 +55,6 @@ class DriverManager:
         except Exception as e:
             logger.error(f"Failed to create WebDriver: {e}")
             raise
-
-    def load_cookies(self):
-        """Загружает сохраненные куки"""
-        if not os.path.exists(self.cookies_file):
-            logger.info("Cookies file not found")
-            return False
-
-        try:
-            self.driver.get(self.base_url)
-            time.sleep(2)
-
-            with open(self.cookies_file, 'rb') as f:
-                cookies = pickle.load(f)
-                loaded_count = 0
-                for cookie in cookies:
-                    try:
-                        self.driver.add_cookie(cookie)
-                        loaded_count += 1
-                    except Exception as e:
-                        logger.warning(f"Failed to load cookie {cookie.get('name', 'unknown')}: {e}")
-                        continue
-
-                logger.info(f"Loaded {loaded_count} cookies")
-
-                self.driver.refresh()
-                time.sleep(3)
-
-                return loaded_count > 0
-
-        except Exception as e:
-            logger.error(f"Failed to load cookies: {e}")
-            return False
-
-    def save_cookies(self):
-        """Сохраняет текущие куки"""
-        if not self.driver:
-            return
-
-        try:
-            cookies = self.driver.get_cookies()
-            with open(self.cookies_file, 'wb') as f:
-                pickle.dump(cookies, f)
-            logger.info("Cookies saved successfully")
-        except Exception as e:
-            logger.error(f"Failed to save cookies: {e}")
 
     def authenticate(self):
         """Авторизация в Instagram"""
