@@ -8,6 +8,10 @@ RUN apt-get update && \
         libsm6 \
         libxext6 \
         libgl1-mesa-glx \
+        xvfb \
+        x11vnc \
+        novnc \
+        websockify \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

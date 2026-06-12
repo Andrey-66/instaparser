@@ -68,6 +68,9 @@ services:
       - SECRETS
       - TELEGRAM_TOKEN=${TOKEN}
       - ADMIN_TELEGRAM_ID
+      - SERVER_URL
+    ports:
+      - "6080:6080"
     depends_on:
       - flask-api
     volumes:

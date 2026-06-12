@@ -1,4 +1,7 @@
 import os
+import secrets
+import string
+import subprocess
 import time
 import json
 import pickle
@@ -17,6 +20,9 @@ class DriverManager:
         self.driver = None
         self.cookies_file = "instagram_cookies.pkl"
         self.base_url = "https://www.instagram.com"
+        self._xvfb_proc = None
+        self._vnc_proc = None
+        self._novnc_proc = None
 
     def create_driver(self, debug=False):
         """Создает новый экземпляр драйвера"""
@@ -142,6 +148,58 @@ class DriverManager:
             logger.error(f"Failed to get driver: {e}")
             self.quit_driver()
             raise
+
+    def start_vnc_session(self) -> str:
+        password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
+
+        self._xvfb_proc = subprocess.Popen(
+            ['Xvfb', ':99', '-screen', '0', '1920x1080x24'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        time.sleep(1)
+
+        self._vnc_proc = subprocess.Popen(
+            ['x11vnc', '-display', ':99', '-forever', '-passwd', password,
+             '-rfbport', '5900', '-noxdamage', '-quiet'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        time.sleep(1)
+
+        self._novnc_proc = subprocess.Popen(
+            ['websockify', '--web=/usr/share/novnc/', '6080', 'localhost:5900'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        time.sleep(1)
+
+        logger.info("VNC session started on :6080")
+        return password
+
+    def start_manual_chrome(self):
+        os.environ['DISPLAY'] = ':99'
+
+        chrome_options = Options()
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.binary_location = "/usr/bin/chromium"
+
+        self.driver = webdriver.Chrome(options=chrome_options)
+        self.driver.get("https://www.instagram.com/accounts/login/")
+        logger.info("Manual Chrome session started, navigated to Instagram login")
+
+    def stop_vnc_session(self):
+        for proc in [self._novnc_proc, self._vnc_proc, self._xvfb_proc]:
+            if proc:
+                try:
+                    proc.terminate()
+                    proc.wait(timeout=5)
+                except Exception:
+                    proc.kill()
+        self._xvfb_proc = self._vnc_proc = self._novnc_proc = None
+        os.environ.pop('DISPLAY', None)
+        logger.info("VNC session stopped")
 
     def quit_driver(self):
         """Закрывает драйвер"""
