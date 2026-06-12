@@ -50,11 +50,19 @@ class InstagramParser:
                 existed_posts_ids = [post['instagram_post_id'] for post in existed_posts]
                 posts = self.get_links(f'https://instagram.com/{profile_name}/', limit, profile_name, exclude='/reel/')
                 reels = self.get_links(f'https://instagram.com/{profile_name}/reels', limit, profile_name, exclude='/p/')
-                logger.info(f"{profile_name} posts: {posts} reels: {reels}")
+                stories = self.get_stories(profile_name)
+                logger.info(f"{profile_name} posts: {posts} reels: {reels} stories: {stories}")
                 if not profile:
                     raise
                 if not update_profile(profile_name, last_parsed=datetime.now().isoformat()):
                     raise
+                if not posts and not reels and not stories:
+                    new_errors_count = profile.get('errors_count') + 1
+                    update_profile(profile_name, errors_count=new_errors_count)
+                    logger.warning(f"@{profile_name}: 0 постов, рилсов и сторис — ошибка {new_errors_count}")
+                    if new_errors_count == 5:
+                        notify_admin(f"Profile @{profile_name} накопил 5 ошибок парсинга (0 постов, рилсов и сторис).")
+                    continue
                 for post in posts:
                     if post in existed_posts_ids:
                         continue
@@ -72,7 +80,6 @@ class InstagramParser:
                         media_type='reel',
                     )
                 update_profile(profile_name, errors_count=0)
-                stories = self.get_stories(profile_name)
                 for story in stories:
                     if story in existed_posts_ids:
                         continue
@@ -81,8 +88,6 @@ class InstagramParser:
                         profile_id=profile.get('id'),
                         media_type='story',
                     )
-
-                logger.info(f"{profile_name} stories: {stories}")
             except TimeoutException as e:
                 logger.warning('Driver timeout, restarting...')
                 if self.driver:
