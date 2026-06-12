@@ -14,7 +14,7 @@ from app_parser.driver import driver_manager
 from app_parser.parser import InstagramParser
 
 AUTH_DONE_FILE = "/content/.auth_done"
-MAX_AUTH_FAILURES = 5
+MAX_AUTH_FAILURES = 1  # TEMP: for testing, revert to 5
 
 logger = logging.getLogger(__name__)
 
