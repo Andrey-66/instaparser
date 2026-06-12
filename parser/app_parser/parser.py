@@ -20,6 +20,7 @@ from app_parser.utils.selenium_utils import open_page
 from selenium.common.exceptions import TimeoutException, WebDriverException
 import logging
 
+from app_parser.api.notify import notify_admin
 from app_parser.api.profiles import get_profile, update_profile
 
 logger = logging.getLogger(__name__)
@@ -91,7 +92,10 @@ class InstagramParser:
             except Exception as e:
                 logger.error(f"Failed to parse profiles: {e}")
                 profile = get_profile(profile_name)
-                update_profile(profile_name, errors_count=profile.get('errors_count')+1)
+                new_errors_count = profile.get('errors_count') + 1
+                update_profile(profile_name, errors_count=new_errors_count)
+                if new_errors_count == 5:
+                    notify_admin(f"Profile @{profile_name} накопил 5 ошибок парсинга.\nПоследняя ошибка: {e}")
                 raise
 
     def get_links(self, url, limit, profile_name, exclude=''):

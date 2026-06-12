@@ -66,6 +66,8 @@ services:
       - EMAILS
       - PASSWORDS
       - SECRETS
+      - TELEGRAM_TOKEN=${TOKEN}
+      - ADMIN_TELEGRAM_ID
     depends_on:
       - flask-api
     volumes:
