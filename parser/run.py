@@ -14,6 +14,7 @@ from app_parser.driver import driver_manager
 from app_parser.parser import InstagramParser
 
 AUTH_DONE_FILE = "/content/.auth_done"
+FORCE_AUTH_FILE = "/content/.force_auth"
 MAX_AUTH_FAILURES = 5
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,19 @@ def setup_logging():
             )
         ]
     )
+
+
+def interruptible_sleep(total_seconds: int) -> bool:
+    """Спит с проверкой флага /force_auth каждые 30 сек.
+    Возвращает True если сон был прерван командой."""
+    deadline = time.time() + total_seconds
+    while time.time() < deadline:
+        if os.path.exists(FORCE_AUTH_FILE):
+            os.remove(FORCE_AUTH_FILE)
+            return True
+        remaining = deadline - time.time()
+        time.sleep(min(30, remaining))
+    return False
 
 
 def wait_for_manual_auth(server_url: str):
@@ -83,7 +97,8 @@ def main():
                 parser.parse_posts(posts)
             sleep_minutes = random.randint(90, 120)
             logger.info(f"Спим {sleep_minutes} минут перед следующей итерацией")
-            time.sleep(sleep_minutes * 60)
+            if interruptible_sleep(sleep_minutes * 60):
+                wait_for_manual_auth(server_url)
         except Exception as e:
             logger.error(f"Parser failed: {e}")
             if "authentication failed" in str(e).lower():
@@ -95,7 +110,9 @@ def main():
                     continue
             sleep_minutes = random.randint(90, 120)
             logger.info(f"Спим {sleep_minutes} минут перед следующей итерацией")
-            time.sleep(sleep_minutes * 60)
+            if interruptible_sleep(sleep_minutes * 60):
+                wait_for_manual_auth(server_url)
+                consecutive_auth_failures = 0
 
 
 if __name__ == "__main__":

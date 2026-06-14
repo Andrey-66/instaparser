@@ -11,6 +11,7 @@ from telegram.ext import Application, CommandHandler
 from app_telegram.api.posts import get_posts, update_post
 from app_telegram.api.profiles import get_profile
 from app_telegram.commands.auth_done import auth_done
+from app_telegram.commands.force_auth import force_auth
 from app_telegram.commands.my_subscriptions import my_subscriptions
 from app_telegram.commands.subscribe import subscribe
 from app_telegram.commands.unsubscribe import unsubscribe
@@ -96,6 +97,7 @@ def main():
     application.add_handler(CommandHandler("unsubscribe", unsubscribe))
     application.add_handler(CommandHandler("mysubscriptions", my_subscriptions))
     application.add_handler(CommandHandler("auth_done", auth_done))
+    application.add_handler(CommandHandler("force_auth", force_auth))
     job_queue.run_repeating(
         background_monitoring,
         interval=300,

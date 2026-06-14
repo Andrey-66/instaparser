@@ -1,6 +1,6 @@
 #!/bin/sh
 # Delay file persisted on the /content mount so it survives container restarts
-DELAY_FILE=/content/.parser_restart_delay
+=/content/.parser_restart_delay
 MAX_DELAY=18000  # 5 hours
 
 if [ -f "$DELAY_FILE" ]; then

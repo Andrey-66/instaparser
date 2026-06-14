@@ -21,23 +21,42 @@ class DriverManager:
         self._vnc_proc = None
         self._novnc_proc = None
 
+    def _kill_zombie_chromes(self):
+        """Убивает зависшие процессы Chrome/Chromium перед новым запуском"""
+        try:
+            subprocess.run(
+                ['pkill', '-f', 'chromium'],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            time.sleep(1)
+        except Exception:
+            pass
+
     def create_driver(self, debug=False):
         """Создает новый экземпляр драйвера"""
+        if not debug:
+            self._kill_zombie_chromes()
+
         chrome_options = Options()
 
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--window-size=1280,800")
         chrome_options.add_argument("--lang=en-US")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--disable-plugins")
+        chrome_options.add_argument("--disable-background-networking")
+        chrome_options.add_argument("--disable-default-apps")
+        chrome_options.add_argument("--no-first-run")
+        chrome_options.add_argument("--disk-cache-size=1")
+        chrome_options.add_argument("--media-cache-size=1")
+        chrome_options.add_argument("--js-flags=--max-old-space-size=256")
         chrome_options.binary_location = "/usr/bin/chromium"
 
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         chrome_options.add_argument(f'user-agent={user_agent}')
 
-        # Таймауты
         chrome_options.add_argument("--page-load-strategy=normal")
         chrome_options.add_argument("--disable-web-security")
         chrome_options.add_argument("--allow-running-insecure-content")
@@ -46,7 +65,7 @@ class DriverManager:
             if debug:
                 chrome_options.binary_location = 'E:\projects\instaparser\chrome-win64\chrome.exe'
             else:
-                chrome_options.add_argument("--headless=new")
+                chrome_options.add_argument("--headless=old")
             self.driver = webdriver.Chrome(options=chrome_options)
             self.driver.set_page_load_timeout(30)
             self.driver.implicitly_wait(10)
@@ -158,6 +177,9 @@ class DriverManager:
         if self.driver:
             try:
                 save_cookies(self.driver)
+            except Exception:
+                pass
+            try:
                 self.driver.quit()
                 logger.info("WebDriver closed")
             except Exception as e:
