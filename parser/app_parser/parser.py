@@ -90,14 +90,14 @@ class InstagramParser:
                         profile_id=profile.get('id'),
                         media_type='story',
                     )
-            except TimeoutException as e:
-                logger.warning('Driver timeout, restarting...')
+            except WebDriverException as e:
+                logger.warning(f'[{i}/{total}] Driver error for @{profile_name}, restarting: {e}')
                 if self.driver:
                     driver_manager.quit_driver()
                 time.sleep(5)
                 self.driver = driver_manager.get_driver()
             except Exception as e:
-                logger.error(f"Failed to parse profiles: {e}")
+                logger.error(f"[{i}/{total}] Failed to parse profile @{profile_name}: {e}")
                 profile = get_profile(profile_name)
                 new_errors_count = profile.get('errors_count') + 1
                 update_profile(profile_name, errors_count=new_errors_count)
@@ -311,16 +311,15 @@ class InstagramParser:
                         continue
                 delete_directory(folder)
                 update_post(post.get('id'), is_downloaded=False, errors_count=errors_count + 1)
-            except TimeoutException as e:
+            except WebDriverException as e:
                 delete_directory(folder)
                 update_post(post.get('id'), is_downloaded=False, errors_count=errors_count + 1)
-                logger.warning('Driver timeout, restarting...')
-                logger.warning(f'Skipping post {url}')
+                logger.warning(f'[{i}/{total}] Driver error for {url}, restarting: {e}')
                 if self.driver:
                     driver_manager.quit_driver()
                 time.sleep(5)
                 self.driver = driver_manager.get_driver()
             except Exception as e:
-                logger.error(f"Failed to parse posts: {e}")
+                logger.error(f"[{i}/{total}] Failed to parse post {url}: {e}")
                 delete_directory(folder)
                 update_post(post.get('id'), is_downloaded=False, errors_count=errors_count + 1)
