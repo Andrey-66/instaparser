@@ -90,6 +90,8 @@ def main():
         try:
             with InstagramParser(limit=10, debug=debug) as parser:
                 consecutive_auth_failures = 0
+                posts = get_posts(is_downloaded=False)
+                parser.parse_posts(posts)
                 profiles = get_profiles()
                 profiles_names = [p.get("username") for p in profiles]
                 parser.parse_profiles(profiles_names)

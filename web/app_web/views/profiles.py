@@ -11,7 +11,7 @@ router = Blueprint('api_profile', __name__, url_prefix='/api')
 
 @router.route('/profiles', methods=['GET'])
 def get_actual_profiles():
-    profiles = Profile.query.all()
+    profiles = Profile.query.order_by(Profile.last_parsed.asc().nullsfirst()).all()
     response = []
     for profile in profiles:
         if profile.subscriptions:
