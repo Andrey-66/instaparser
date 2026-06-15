@@ -43,15 +43,17 @@ class InstagramParser:
 
     def parse_profiles(self, profiles_names, limit=10):
         """Парсит посты профиля"""
-        for profile_name in profiles_names:
+        total = len(profiles_names)
+        for i, profile_name in enumerate(profiles_names, 1):
             try:
+                logger.info(f"[{i}/{total}] Парсинг профиля @{profile_name}")
                 profile = get_profile(profile_name)
                 existed_posts = get_posts(profile_id=profile.get('id'))
                 existed_posts_ids = [post['instagram_post_id'] for post in existed_posts]
                 posts = self.get_links(f'https://instagram.com/{profile_name}/', limit, profile_name, exclude='/reel/')
                 reels = self.get_links(f'https://instagram.com/{profile_name}/reels', limit, profile_name, exclude='/p/')
                 stories = self.get_stories(profile_name)
-                logger.info(f"{profile_name} posts: {posts} reels: {reels} stories: {stories}")
+                logger.info(f"[{i}/{total}] @{profile_name} posts: {posts} reels: {reels} stories: {stories}")
                 if not profile:
                     raise
                 if not update_profile(profile_name, last_parsed=datetime.now().isoformat()):
@@ -243,9 +245,10 @@ class InstagramParser:
             return []
 
     def parse_posts(self, posts):
-        for post in posts:
+        total = len(posts)
+        for i, post in enumerate(posts, 1):
             sleep_minutes = uniform(60, 240)
-            logger.info(f"Sleep {sleep_minutes / 60} minutes")
+            logger.info(f"[{i}/{total}] Скачивание поста: {post.get('instagram_post_id')} | Sleep {sleep_minutes / 60:.1f} min")
             time.sleep(sleep_minutes)
             url = post.get('instagram_post_id')
             author_name = post.get('profile_username')
