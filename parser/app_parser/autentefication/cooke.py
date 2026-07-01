@@ -38,6 +38,12 @@ def load_cookies(driver, path=COOKIES_FILE):
 
 def save_cookies(driver, path=COOKIES_FILE):
     """Сохранить текущие cookies в файл."""
+    try:
+        if BASE_URL not in driver.current_url:
+            driver.get(BASE_URL)
+            time.sleep(1)
+    except Exception:
+        pass
     cookies = driver.get_cookies()
     cookies = [normalize_cookie(c) for c in cookies]
     with open(path, "w", encoding="utf-8") as f:
