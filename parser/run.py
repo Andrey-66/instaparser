@@ -4,6 +4,7 @@ import time
 from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
+from selenium.common.exceptions import WebDriverException
 import logging
 
 from app_parser.api.notify import notify_admin
@@ -49,6 +50,18 @@ def interruptible_sleep(total_seconds: int) -> bool:
     return False
 
 
+def _focus_remaining_window(driver):
+    """Админ может залогиниться в новой вкладке, а не в той, что открыл Selenium,
+    и закрыть исходную. Переключаемся на то, что осталось открытым, иначе
+    save_cookies упадёт с 'no such window' на закрытой вкладке."""
+    try:
+        handles = driver.window_handles
+        if handles:
+            driver.switch_to.window(handles[-1])
+    except WebDriverException as e:
+        logger.warning(f"Не удалось переключиться на открытую вкладку: {e}")
+
+
 def wait_for_manual_auth(server_url: str, reason: str = f"Авторизация Instagram провалилась {MAX_AUTH_FAILURES} раз подряд."):
     if os.path.exists(AUTH_DONE_FILE):
         os.remove(AUTH_DONE_FILE)
@@ -68,6 +81,7 @@ def wait_for_manual_auth(server_url: str, reason: str = f"Авторизация
             time.sleep(10)
 
         os.remove(AUTH_DONE_FILE)
+        _focus_remaining_window(driver_manager.driver)
         save_cookies(driver_manager.driver)
         logger.info("Куки сохранены после ручной авторизации")
 
