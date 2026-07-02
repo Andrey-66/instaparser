@@ -86,6 +86,9 @@ def main():
 
     consecutive_auth_failures = 0
 
+    logger.info("Первый запуск: авторизация строго через VNC")
+    wait_for_manual_auth(server_url)
+
     while True:
         try:
             with InstagramParser(limit=10, debug=debug) as parser:
