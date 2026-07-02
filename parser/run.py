@@ -49,7 +49,7 @@ def interruptible_sleep(total_seconds: int) -> bool:
     return False
 
 
-def wait_for_manual_auth(server_url: str):
+def wait_for_manual_auth(server_url: str, reason: str = f"Авторизация Instagram провалилась {MAX_AUTH_FAILURES} раз подряд."):
     if os.path.exists(AUTH_DONE_FILE):
         os.remove(AUTH_DONE_FILE)
 
@@ -58,7 +58,7 @@ def wait_for_manual_auth(server_url: str):
         driver_manager.start_manual_chrome()
 
         notify_admin(
-            f"⚠️ Авторизация Instagram провалилась {MAX_AUTH_FAILURES} раз подряд.\n\n"
+            f"⚠️ {reason}\n\n"
             f"Открой в браузере:\n{server_url}:6080/vnc.html?autoconnect=1&password={password}\n\n"
             f"Залогинься в Instagram и отправь /auth_done"
         )
@@ -87,7 +87,7 @@ def main():
     consecutive_auth_failures = 0
 
     logger.info("Первый запуск: авторизация строго через VNC")
-    wait_for_manual_auth(server_url)
+    wait_for_manual_auth(server_url, reason="Первый запуск парсера, нужна авторизация Instagram.")
 
     while True:
         try:

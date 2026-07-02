@@ -5,6 +5,7 @@ import subprocess
 import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import TimeoutException
 import logging
 
 from app_parser.autentefication.cooke import load_cookies, save_cookies
@@ -131,7 +132,7 @@ class DriverManager:
                 pass
 
         self._xvfb_proc = subprocess.Popen(
-            ['Xvfb', ':99', '-screen', '0', '1920x1080x24'],
+            ['Xvfb', ':99', '-screen', '0', '1280x800x24'],
             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
         )
         deadline = time.time() + 10
@@ -165,14 +166,20 @@ class DriverManager:
         chrome_options = Options()
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--window-size=1280,800")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--disable-extensions")
         chrome_options.binary_location = "/usr/bin/chromium"
 
         self.driver = webdriver.Chrome(options=chrome_options)
-        self.driver.get("https://www.instagram.com/accounts/login/")
-        logger.info("Manual Chrome session started, navigated to Instagram login")
+        self.driver.set_page_load_timeout(60)
+        try:
+            self.driver.get("https://www.instagram.com/accounts/login/")
+            logger.info("Manual Chrome session started, navigated to Instagram login")
+        except TimeoutException:
+            # Страница ещё догружается в фоне — админ может подождать/обновить
+            # вручную через VNC, не нужно валить всю сессию из-за этого
+            logger.warning("Instagram login page is loading slowly, leaving it to finish in the background")
 
     def stop_vnc_session(self):
         for proc in [self._novnc_proc, self._vnc_proc, self._xvfb_proc]:
