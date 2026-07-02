@@ -123,11 +123,25 @@ class DriverManager:
     def start_vnc_session(self) -> str:
         password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
 
+        # Stale files from a previous ungracefully-killed Xvfb make it refuse to bind :99
+        for stale in ("/tmp/.X99-lock", "/tmp/.X11-unix/X99"):
+            try:
+                os.remove(stale)
+            except FileNotFoundError:
+                pass
+
         self._xvfb_proc = subprocess.Popen(
             ['Xvfb', ':99', '-screen', '0', '1920x1080x24'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
         )
-        time.sleep(1)
+        deadline = time.time() + 10
+        while time.time() < deadline and not os.path.exists("/tmp/.X11-unix/X99"):
+            if self._xvfb_proc.poll() is not None:
+                stderr = self._xvfb_proc.stderr.read().decode(errors="replace")
+                raise RuntimeError(f"Xvfb exited immediately (code {self._xvfb_proc.returncode}): {stderr}")
+            time.sleep(0.2)
+        if not os.path.exists("/tmp/.X11-unix/X99"):
+            raise RuntimeError("Xvfb did not create display :99 within 10s")
 
         self._vnc_proc = subprocess.Popen(
             ['x11vnc', '-display', ':99', '-forever', '-passwd', password,
