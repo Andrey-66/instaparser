@@ -53,11 +53,11 @@ class DriverManager:
         chrome_options.add_argument("--no-first-run")
         chrome_options.add_argument("--disk-cache-size=1")
         chrome_options.add_argument("--media-cache-size=1")
-        # 256МБ было слишком мало для JS-тяжёлых страниц Instagram: V8 уходил в
-        # почти непрерывный major GC (может занимать секунды на 1 vCPU), из-за
-        # чего renderer не отвечал chromedriver'у больше 120с — выглядело как
-        # "зависание", а не падение. 512МБ оставляет запас без выхода за бюджет
-        # памяти контейнера (см. docker-compose.yml: parser mem_limit).
+        # Поднято с 256 до 512 в 818c04c в надежде, что дело в GC-трэшинге на
+        # 1 vCPU — но зависания (Read timed out >120с) повторились и с 512,
+        # без OOM и без свопа (см. docker-compose.yml: parser), так что тесный
+        # heap не был (единственной) причиной. Оставляем 512 как разумный
+        # запас, но реальная причина зависаний chromedriver'а ещё не найдена.
         # Картинки НЕ отключаем: selenium_download.py читает naturalWidth и
         # рисует img на canvas, чтобы вытащить байты — для этого браузер должен
         # реально их декодировать.
