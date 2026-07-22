@@ -2,6 +2,7 @@ import os
 import secrets
 import string
 import subprocess
+import threading
 import time
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -52,6 +53,14 @@ class DriverManager:
         chrome_options.add_argument("--no-first-run")
         chrome_options.add_argument("--disk-cache-size=1")
         chrome_options.add_argument("--media-cache-size=1")
+        # 256МБ было слишком мало для JS-тяжёлых страниц Instagram: V8 уходил в
+        # почти непрерывный major GC (может занимать секунды на 1 vCPU), из-за
+        # чего renderer не отвечал chromedriver'у больше 120с — выглядело как
+        # "зависание", а не падение. 512МБ оставляет запас без выхода за бюджет
+        # памяти контейнера (см. docker-compose.yml: parser mem_limit).
+        # Картинки НЕ отключаем: selenium_download.py читает naturalWidth и
+        # рисует img на canvas, чтобы вытащить байты — для этого браузер должен
+        # реально их декодировать.
         chrome_options.add_argument("--js-flags=--max-old-space-size=512")
         chrome_options.binary_location = "/usr/bin/chromium"
 
@@ -193,19 +202,44 @@ class DriverManager:
         os.environ.pop('DISPLAY', None)
         logger.info("VNC session stopped")
 
-    def quit_driver(self):
-        """Закрывает драйвер"""
-        if self.driver:
+    def quit_driver(self, kill_timeout=15):
+        """Закрывает драйвер.
+
+        Если chromedriver уже завис (мёртвое HTTP-соединение), save_cookies()
+        и driver.quit() виснут на тех же retry-таймаутах urllib3 (до ~20 минут
+        суммарно). Поэтому ждём штатное закрытие ограниченное время в фоновом
+        потоке, а если не уложились — убиваем процесс chromedriver напрямую.
+        Оставшиеся дочерние процессы chrome подчистит _kill_zombie_chromes()
+        перед следующим create_driver().
+        """
+        if not self.driver:
+            return
+
+        driver, self.driver = self.driver, None
+
+        def graceful_shutdown():
             try:
-                save_cookies(self.driver)
+                save_cookies(driver)
             except Exception:
                 pass
             try:
-                self.driver.quit()
-                logger.info("WebDriver closed")
+                driver.quit()
             except Exception as e:
                 logger.error(f"Error closing WebDriver: {e}")
-            finally:
-                self.driver = None
+
+        shutdown_thread = threading.Thread(target=graceful_shutdown, daemon=True)
+        shutdown_thread.start()
+        shutdown_thread.join(timeout=kill_timeout)
+
+        if shutdown_thread.is_alive():
+            logger.warning(
+                f"WebDriver не ответил за {kill_timeout}с, убиваю процесс chromedriver напрямую"
+            )
+            try:
+                driver.service.process.kill()
+            except Exception as e:
+                logger.error(f"Не удалось убить процесс chromedriver: {e}")
+        else:
+            logger.info("WebDriver closed")
 
 driver_manager = DriverManager()

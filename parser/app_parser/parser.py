@@ -18,12 +18,18 @@ from app_parser.driver import driver_manager
 from app_parser.utils.files import delete_directory
 from app_parser.utils.selenium_utils import open_page
 from selenium.common.exceptions import TimeoutException, WebDriverException
+from urllib3.exceptions import HTTPError as Urllib3HTTPError
 import logging
 
 from app_parser.api.notify import notify_admin
 from app_parser.api.profiles import get_profile, update_profile
 
 logger = logging.getLogger(__name__)
+
+# Зависший chromedriver отдаёт не selenium.WebDriverException, а голый urllib3
+# (ReadTimeoutError/MaxRetryError) — оба наследуются от HTTPError. Ловим вместе,
+# иначе такая ошибка проваливается в общий except и убивает весь прогон парсера.
+DRIVER_ERRORS = (WebDriverException, Urllib3HTTPError)
 
 
 class InstagramParser:
@@ -90,7 +96,7 @@ class InstagramParser:
                         profile_id=profile.get('id'),
                         media_type='story',
                     )
-            except WebDriverException as e:
+            except DRIVER_ERRORS as e:
                 logger.warning(f'[{i}/{total}] Driver error for @{profile_name}, restarting: {e}')
                 if self.driver:
                     driver_manager.quit_driver()
@@ -311,7 +317,7 @@ class InstagramParser:
                         continue
                 delete_directory(folder)
                 update_post(post.get('id'), is_downloaded=False, errors_count=errors_count + 1)
-            except WebDriverException as e:
+            except DRIVER_ERRORS as e:
                 delete_directory(folder)
                 update_post(post.get('id'), is_downloaded=False, errors_count=errors_count + 1)
                 logger.warning(f'[{i}/{total}] Driver error for {url}, restarting: {e}')

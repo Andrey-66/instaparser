@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ============= PostgreSQL =============
   postgres-db:
@@ -12,6 +10,7 @@ services:
       POSTGRES_DB: instadb
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    mem_limit: 150m
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U instauser -d instadb"]
       interval: 10s
@@ -50,6 +49,7 @@ services:
       - ./content:/content
       - ./web/migrations:/app/migrations
     restart: unless-stopped
+    mem_limit: 150m
     networks:
       - backend
     command: ["python", "run.py"]
@@ -76,6 +76,13 @@ services:
     volumes:
       - ./content:/content
     restart: on-failure
+    # На 1 vCPU/2ГБ уход Chrome в своп означает не медленную работу, а
+    # многоминутные подвисания HTTP-запросов к chromedriver (что и было в
+    # логах). Жёсткий лимит без свопа даёт cgroup OOM-killer убить процесс за
+    # секунды вместо ~20 минут хождения по urllib3-ретраям — это и должен
+    # словить свежий except в parser.py, который перезапустит драйвер.
+    mem_limit: 1200m
+    memswap_limit: 1200m
     networks:
       - backend
     command: ["sh", "/app/restart_wrapper.sh"]
@@ -95,6 +102,7 @@ services:
     volumes:
       - ./content:/content
     restart: unless-stopped
+    mem_limit: 120m
     networks:
       - backend
 
@@ -112,6 +120,7 @@ services:
         target: /data/users.yml
     ports:
       - "8080:8080"
+    mem_limit: 64m
     networks:
       - backend
     restart: unless-stopped
