@@ -104,7 +104,7 @@ services:
     volumes:
       - ./content:/content
     restart: unless-stopped
-    mem_limit: 100m
+    mem_limit: 256m
     networks:
       - backend
 
