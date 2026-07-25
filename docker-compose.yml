@@ -49,7 +49,7 @@ services:
       - ./content:/content
       - ./web/migrations:/app/migrations
     restart: unless-stopped
-    mem_limit: 130m
+    mem_limit: 256m
     networks:
       - backend
     command: ["python", "run.py"]
