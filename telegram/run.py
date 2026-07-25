@@ -1,8 +1,10 @@
+import asyncio
 import logging
 import os
 import time
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
+from random import uniform
 
 from dotenv import load_dotenv
 from telegram import Update
@@ -57,6 +59,7 @@ async def background_monitoring(context):
                     delete_directory(file)
                     update_post(post_id, is_sent=False, is_downloaded=False)
                     continue
+                media_failed = False
                 for telegram_id in telegram_ids:
                     logger.info(f'Sending {link} to {telegram_id}')
                     if media_type == 'reel':
@@ -73,10 +76,21 @@ async def background_monitoring(context):
                                                parse_mode="HTML")
                     else:
                         continue
+                    await asyncio.sleep(10)
 
-                    await send_content(file, telegram_id, bot)
+                    try:
+                        await send_content(file, telegram_id, bot)
+                    except Exception as e:
+                        logger.error(f'Failed to send media for {link} to {telegram_id}: {e}')
+                        media_failed = True
+                        break
                     logger.info(f'Successfully sent post to {telegram_id}')
+                    await asyncio.sleep(uniform(30, 60))
+
                 delete_directory(file)
+                if media_failed:
+                    update_post(post_id, is_downloaded=False)
+                    continue
                 update_post(post_id, is_sent=True, sent_at=datetime.now().isoformat(), sent_to=', '.join(telegram_ids))
                 time.sleep(3)
             except Exception as e:
