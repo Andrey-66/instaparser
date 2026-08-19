@@ -99,12 +99,25 @@ services:
     environment:
       - TOKEN
       - URL=http://flask-api:5000
+      - ADMIN_TELEGRAM_ID
     depends_on:
       - flask-api
     volumes:
       - ./content:/content
     restart: unless-stopped
-    mem_limit: 256m
+    # 256m ещё раз не хватило на буферизацию крупного reel при отправке
+    # (send_content держит видео в памяти целиком) — точный сигнатурный
+    # SIGKILL ~22с в run.py, тот же паттерн, что уже чинили. 512m с запасом
+    # покрывает один reel (Telegram Bot API и так режет файлы >50MB).
+    # Внимание: сумма всех mem_limit в этом файле (130+256+950+512+50=1898m)
+    # уже больше реальных ~1.7ГБ хоста — это осознанный оверсабскрайб
+    # (лимиты это потолки, а не резервирование, сервисы редко пикуют
+    # одновременно), но если когда-нибудь пиканут все разом — хостовый
+    # OOM-killer может убить не telegram-bot, а любой другой процесс
+    # непредсказуемо. Страховка от бесконечного спама на этот случай —
+    # errors_count/MAX_SEND_ATTEMPTS в telegram/run.py, а не память сама
+    # по себе.
+    mem_limit: 512m
     networks:
       - backend
 

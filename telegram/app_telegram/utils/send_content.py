@@ -34,23 +34,30 @@ async def send_content(directory, telegram_id, bot):
         delete_directory(directory)
         return
 
-    if len(media) == 1:
-        m = media[0]
-        if isinstance(m, InputMediaPhoto):
-            await bot.send_photo(chat_id=telegram_id, photo=m.media, caption=caption, parse_mode="HTML")
-            logger.info('Отправлено 1 фото')
+    # Файлы держим открытыми, пока идёт отправка (python-telegram-bot читает
+    # их лениво), но обязательно закрываем после — иначе хендлы и
+    # буферизованные в памяти данные накапливаются на каждого получателя поста.
+    try:
+        if len(media) == 1:
+            m = media[0]
+            if isinstance(m, InputMediaPhoto):
+                await bot.send_photo(chat_id=telegram_id, photo=m.media, caption=caption, parse_mode="HTML")
+                logger.info('Отправлено 1 фото')
+            else:
+                await bot.send_video(chat_id=telegram_id, video=m.media, caption=caption, parse_mode="HTML")
+                logger.info('Отправлено 1 видео')
+        elif len(media) <= 10:
+            await bot.send_media_group(chat_id=telegram_id, media=media, caption=caption)
+            logger.info(f'Отправлено {len(media)} медиа')
         else:
-            await bot.send_video(chat_id=telegram_id, video=m.media, caption=caption, parse_mode="HTML")
-            logger.info('Отправлено 1 видео')
-        # m.media.close()
-    elif len(media) <= 10:
-        await bot.send_media_group(chat_id=telegram_id, media=media, caption=caption)
-        logger.info(f'Отправлено {len(media)} медиа')
-    else:
-        media = [tuple(media[i:i + 10]) for i in range(0, len(media), 10)]
+            chunks = [media[i:i + 10] for i in range(0, len(media), 10)]
+            for chunk in chunks:
+                await bot.send_media_group(chat_id=telegram_id, media=chunk, caption=caption)
+                logger.info(f'Отправлено {len(chunk)} медиа')
+    finally:
         for m in media:
-            await bot.send_media_group(chat_id=telegram_id, media=m, caption=caption)
-            logger.info(f'Отправлено {len(m)} медиа')
+            m.media.close()
+
     if separate_caption:
         for i in range(0, len(separate_caption), 4000):
             part = separate_caption[i:i + 4000]
