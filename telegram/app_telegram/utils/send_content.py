@@ -24,10 +24,19 @@ async def send_content(directory, telegram_id, bot):
         caption = ""
 
     media = []
+    # Отдельно храним сырые файловые хендлы: после оборачивания в
+    # InputMediaPhoto/InputMediaVideo атрибут .media — это уже внутренний
+    # InputFile библиотеки, у него нет close(), закрывать нужно именно
+    # исходный объект, который вернул open().
+    opened_files = []
     for f in jpg_files:
-        media.append(InputMediaPhoto(open(os.path.join(directory, f), "rb")))
+        fh = open(os.path.join(directory, f), "rb")
+        opened_files.append(fh)
+        media.append(InputMediaPhoto(fh))
     for f in mp4_files:
-        media.append(InputMediaVideo(open(os.path.join(directory, f), "rb")))
+        fh = open(os.path.join(directory, f), "rb")
+        opened_files.append(fh)
+        media.append(InputMediaVideo(fh))
 
     if not media:
         # await bot.send_message(chat_id=telegram_id, text="⚠️ Контент не найден.")
@@ -55,8 +64,8 @@ async def send_content(directory, telegram_id, bot):
                 await bot.send_media_group(chat_id=telegram_id, media=chunk, caption=caption)
                 logger.info(f'Отправлено {len(chunk)} медиа')
     finally:
-        for m in media:
-            m.media.close()
+        for fh in opened_files:
+            fh.close()
 
     if separate_caption:
         for i in range(0, len(separate_caption), 4000):
