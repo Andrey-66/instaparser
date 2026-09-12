@@ -9,6 +9,7 @@ from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 
 from app_parser.download.selenium_download import get_text_preview
+from app_parser.utils.media_check import ensure_faststart, has_audio_stream
 from app_parser.utils.selenium_utils import open_page
 
 logger = logging.getLogger(__name__)
@@ -87,13 +88,19 @@ def iqsaved_download(driver, url, dir_path=None):
             logger.debug(f"✅ Photo saved successfully in: {file_path}")
             time.sleep(5)
         for link in video_links:
-            response = requests.get(link, stream=True)
+            response = requests.get(link, stream=True, timeout=30)
             response.raise_for_status()
             file_path = os.path.join(dir_path, f"video_{int(time.time_ns())}.mp4")
             with open(file_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             logger.info(f"✅ Video saved successfully in: {file_path}")
+            if not has_audio_stream(file_path):
+                logger.warning(f"⚠️ Видео с iqsaved без звука, бракуем: {file_path}")
+                os.remove(file_path)
+                return False
+            if not ensure_faststart(file_path):
+                logger.warning(f"⚠️ Не удалось привести видео к faststart: {file_path}")
             time.sleep(5)
         return True
     except TimeoutException as e:

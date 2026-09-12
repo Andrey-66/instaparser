@@ -99,10 +99,37 @@ def download_instagram_video_via_network(link, folder_path):
     logger.debug(f'Нашёл исходник аудио для {audio_url}')
     v_temp = os.path.join(folder_path, "temp_video.mp4")
     a_temp = os.path.join(folder_path, "temp_audio.mp3")
-    download_file(video_url, v_temp)
-    download_file(audio_url, a_temp)
+    video_ok = download_file(video_url, v_temp)
+    if not video_ok:
+        logger.error("Не удалось скачать видео, склейка отменена")
+        if os.path.exists(v_temp):
+            os.remove(v_temp)
+        driver.quit()
+        return False
+
     target_folder_path = os.path.join(folder_path, f"video_{int(time.time_ns())}.mp4")
-    if ffmpeg_merge(video_url, audio_url, target_folder_path):
+
+    if audio_url is None:
+        # У источника нет отдельного аудио-потока — значит у ролика
+        # действительно нет звука (или Instagram не отдаёт лицензионную
+        # музыку для скачивания), это не ошибка. Отдаём видео как есть.
+        logger.info("Аудиодорожка у источника не найдена, видео без звука — это ожидаемо")
+        os.replace(v_temp, target_folder_path)
+        driver.quit()
+        return True
+
+    audio_ok = download_file(audio_url, a_temp)
+    if not audio_ok:
+        # А вот тут аудио-поток точно был, но скачать его не удалось —
+        # это уже реальный сбой, а не немое видео по задумке.
+        logger.error("Не удалось скачать аудио, склейка отменена")
+        for tmp in (v_temp, a_temp):
+            if os.path.exists(tmp):
+                os.remove(tmp)
+        driver.quit()
+        return False
+
+    if ffmpeg_merge(v_temp, a_temp, target_folder_path):
         driver.quit()
         return True
     driver.quit()

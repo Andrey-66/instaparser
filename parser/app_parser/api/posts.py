@@ -19,7 +19,8 @@ def create_post(instagram_post_id,
                 sent_to=None,
                 is_downloaded=False,
                 file_path=None,
-                errors_count=0):
+                errors_count=0,
+                no_audio=False):
     payload = {
         'instagram_post_id': instagram_post_id,
         'profile_id': profile_id,
@@ -29,7 +30,8 @@ def create_post(instagram_post_id,
         'sent_to': sent_to,
         'is_downloaded': is_downloaded,
         'file_path': file_path,
-        'errors_count': errors_count
+        'errors_count': errors_count,
+        'no_audio': no_audio
     }
     try:
         response = requests.post(f'{URL}/api/posts', json=payload)
@@ -87,20 +89,23 @@ def update_post(post_id,
                 sent_to=None,
                 is_downloaded=None,
                 file_path=None,
-                errors_count=None):
+                errors_count=None,
+                no_audio=None):
     payload = {}
-    if is_sent:
+    if is_sent is not None:
         payload['is_sent'] = is_sent
     if sent_at:
         payload['sent_at'] = sent_at
     if sent_to:
         payload['sent_to'] = sent_to
-    if is_downloaded:
+    if is_downloaded is not None:
         payload['is_downloaded'] = is_downloaded
     if file_path:
         payload['file_path'] = file_path
     if errors_count is not None:
         payload['errors_count'] = errors_count
+    if no_audio is not None:
+        payload['no_audio'] = no_audio
     if not payload:
         logger.error(f"Error updating post {post_id}: no data to update")
         return False

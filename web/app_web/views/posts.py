@@ -55,7 +55,8 @@ def get_posts():
                 'is_downloaded': post.is_downloaded,
                 'file_path': post.file_path,
                 'created_at': post.created_at.isoformat(),
-                'errors_count': post.errors_count
+                'errors_count': post.errors_count,
+                'no_audio': post.no_audio
             })
 
         logger.info(f"Retrieved {len(result)} posts with filters: "
@@ -84,7 +85,8 @@ def get_post(instagram_post_id):
         'is_downloaded': post.is_downloaded,
         'file_path': post.file_path,
         'created_at': post.created_at.isoformat(),
-        'errors_count': post.errors_count
+        'errors_count': post.errors_count,
+        'no_audio': post.no_audio
     })
 
 @router.route('/posts', methods=['POST'])
@@ -127,7 +129,8 @@ def create_post():
             sent_to=None,
             is_downloaded=data.get('is_downloaded', False),
             file_path=data.get('file_path'),
-            errors_count=data.get('errors_count', 0)
+            errors_count=data.get('errors_count', 0),
+            no_audio=data.get('no_audio', False)
         )
 
         sent_at = data.get('sent_at')
@@ -163,7 +166,8 @@ def create_post():
             'is_downloaded': post.is_downloaded,
             'file_path': post.file_path,
             'created_at': post.created_at.isoformat(),
-            'errors_count': post.errors_count
+            'errors_count': post.errors_count,
+            'no_audio': post.no_audio
         }), 201
 
     except Exception as e:
@@ -191,6 +195,8 @@ def update_post(post_id):
         post.file_path = data['file_path']
     if 'errors_count' in data:
         post.errors_count = data['errors_count']
+    if 'no_audio' in data:
+        post.no_audio = data['no_audio']
     try:
         database.session.commit()
         return jsonify({
@@ -204,7 +210,8 @@ def update_post(post_id):
             'is_downloaded': post.is_downloaded,
             'file_path': post.file_path,
             'created_at': post.created_at.isoformat(),
-            'errors_count': post.errors_count
+            'errors_count': post.errors_count,
+            'no_audio': post.no_audio
         }), 200
     except Exception as e:
         database.session.rollback()

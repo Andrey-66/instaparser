@@ -16,6 +16,7 @@ from app_parser.download.iqsaved_download import post_iqsaved_download, story_iq
 from app_parser.download.selenium_download import selenium_download, selenium_story_download
 from app_parser.driver import driver_manager
 from app_parser.utils.files import delete_directory
+from app_parser.utils.media_check import folder_has_silent_video
 from app_parser.utils.selenium_utils import open_page
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from urllib3.exceptions import HTTPError as Urllib3HTTPError
@@ -275,12 +276,14 @@ class InstagramParser:
                     continue
 
                 if selenium_story_download(self.driver, url, folder):
-                    update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                    update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0,
+                                no_audio=folder_has_silent_video(folder))
                     logger.info(f"Selenium download success for {story_id}")
                     continue
 
                 if story_iqsaved_download(self.driver, story_id ,author_name, folder):
-                    update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                    update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0,
+                                no_audio=folder_has_silent_video(folder))
                     logger.info(f"Selenium download success for {story_id}")
                     continue
 
@@ -294,25 +297,30 @@ class InstagramParser:
             try:
                 if instaloader_download(shortcode, folder):
                     logger.info(f"Instaloader download success for {shortcode}")
-                    update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                    update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0,
+                                no_audio=folder_has_silent_video(folder))
                     continue
                 author_url = f'https://www.instagram.com/{author_name}/'
                 if media_type == 'reel':
                     if post_iqsaved_download(self.driver, shortcode, author_url, folder):
-                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0,
+                                    no_audio=folder_has_silent_video(folder))
                         logger.info(f"Iqsaved download success for {shortcode}")
                         continue
                     if selenium_download(self.driver, url, folder, author_name):
-                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0,
+                                    no_audio=folder_has_silent_video(folder))
                         logger.info(f"Selenium download success for {shortcode}")
                         continue
                 else:
                     if selenium_download(self.driver, url, folder, author_name):
-                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0,
+                                    no_audio=folder_has_silent_video(folder))
                         logger.info(f"Selenium download success for {shortcode}")
                         continue
                     if post_iqsaved_download(self.driver, shortcode, author_url, folder):
-                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0)
+                        update_post(post.get('id'), is_downloaded=True, file_path=folder[3:], errors_count=0,
+                                    no_audio=folder_has_silent_video(folder))
                         logger.info(f"Iqsaved download success for {shortcode}")
                         continue
                 delete_directory(folder)

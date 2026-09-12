@@ -60,6 +60,7 @@ async def background_monitoring(context):
                 post_id = post.get('id')
                 telegram_ids = instagram_profile.get("telegram_ids")
                 errors_count = post.get('errors_count') or 0
+                no_audio = post.get('no_audio', False)
                 logger.info(f'Sending post {link}')
                 if not folder_has_files(file):
                     logger.error(f'Folder {file} is empty or does not exist')
@@ -109,6 +110,23 @@ async def background_monitoring(context):
                         media_failed = True
                         break
                     logger.info(f'Successfully sent post to {telegram_id}')
+
+                    if no_audio:
+                        # Отдельным сообщением, не вместе с текстом поста —
+                        # чтобы предупреждение не терялось в подписи и было
+                        # явно видно, что это не баг воспроизведения. Сбой
+                        # отправки самого предупреждения не должен рушить уже
+                        # состоявшуюся доставку контента.
+                        try:
+                            await asyncio.sleep(2)
+                            await bot.send_message(
+                                chat_id=telegram_id,
+                                text="⚠️ Видео без звука — звук отсутствует в источнике "
+                                     "или недоступен для скачивания."
+                            )
+                        except Exception as e:
+                            logger.error(f'Failed to send no-audio warning for {link} to {telegram_id}: {e}')
+
                     await asyncio.sleep(uniform(30, 60))
 
                 delete_directory(file)

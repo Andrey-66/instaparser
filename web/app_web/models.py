@@ -30,6 +30,10 @@ class Post(database.Model):
     file_path = database.Column(database.String(512))
     created_at = database.Column(database.DateTime, default=datetime.utcnow)
     errors_count = database.Column(database.Integer, default=0, nullable=False)
+    # Видео скачано, но без звука (звука нет в источнике либо он недоступен
+    # для скачивания) — используется, чтобы бот прислал отдельное
+    # предупреждение подписчику вместо тихой отправки немого видео.
+    no_audio = database.Column(database.Boolean, default=False, nullable=False)
 
     def __repr__(self):
         return f'<Post {self.instagram_post_id}>'
