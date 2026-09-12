@@ -10,7 +10,8 @@ import logging
 from app_parser.api.notify import notify_admin
 from app_parser.api.posts import get_posts
 from app_parser.api.profiles import get_profiles
-from app_parser.autentefication.cooke import save_cookies
+from app_parser.autentefication.cooke import load_cookies, save_cookies
+from app_parser.autentefication.login import check_login
 from app_parser.driver import driver_manager
 from app_parser.parser import InstagramParser
 
@@ -62,6 +63,25 @@ def _focus_remaining_window(driver):
         logger.warning(f"Не удалось переключиться на открытую вкладку: {e}")
 
 
+def try_cookie_login(debug: bool) -> bool:
+    """Проверяет, можно ли зайти по уже сохранённым cookies, не делая
+    реальной попытки логина (чтобы лишний раз не долбить Instagram
+    логином, если сервер сейчас под IP-блокировкой). Используется, чтобы
+    не форсировать VNC-авторизацию на каждый рестарт контейнера, если
+    валидная сессия уже есть на диске."""
+    try:
+        driver_manager.create_driver(debug)
+        driver_manager.driver.get(driver_manager.base_url)
+        if not load_cookies(driver_manager.driver):
+            return False
+        return check_login(driver_manager.driver)
+    except Exception as e:
+        logger.warning(f"Проверка cookies не удалась: {e}")
+        return False
+    finally:
+        driver_manager.quit_driver()
+
+
 def wait_for_manual_auth(server_url: str, reason: str = f"Авторизация Instagram провалилась {MAX_AUTH_FAILURES} раз подряд."):
     if os.path.exists(AUTH_DONE_FILE):
         os.remove(AUTH_DONE_FILE)
@@ -100,8 +120,11 @@ def main():
 
     consecutive_auth_failures = 0
 
-    logger.info("Первый запуск: авторизация строго через VNC")
-    wait_for_manual_auth(server_url, reason="Первый запуск парсера, нужна авторизация Instagram.")
+    if try_cookie_login(debug):
+        logger.info("Валидные cookies найдены, ручная авторизация через VNC не требуется")
+    else:
+        logger.info("Первый запуск: авторизация строго через VNC")
+        wait_for_manual_auth(server_url, reason="Первый запуск парсера, нужна авторизация Instagram.")
 
     while True:
         try:
