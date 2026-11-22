@@ -20,6 +20,15 @@
   .home-error { background: #cf3f43; }
   .home-more { font-size: 11px; padding: 0 2px; }
   .home-legend { margin-top: 16px; }
+  .home-activity { display: inline-flex; align-items: baseline; gap: 6px;
+    margin-left: 5px; padding: 4px 10px; border-radius: 14px;
+    background: #eef1f4; color: #475467; }
+  .home-activity[data-state="sleeping"] { background: #eaf1fb; color: #244871; }
+  .home-activity[data-state="profile"] { background: #e0f3ed; color: #185b47; }
+  .home-activity[data-state="download"] { background: #e8efff; color: #244b91; }
+  .home-activity[data-state="starting"] { background: #efeafa; color: #584084; }
+  .home-activity[data-state="waiting_auth"] { background: #fff1ce; color: #744800; }
+  .home-activity a { color: inherit; text-decoration: underline; }
   .home-legend .home-dot, #home-story-list .home-dot { margin-right: 5px; }
   #home-stories { width: min(92vw, 580px); max-height: 80vh; border: 1px solid #ddd; border-radius: 6px; }
   #home-stories::backdrop { background: #0006; }
@@ -30,6 +39,10 @@
 </style>
 
 <h2>Профили</h2>
+<p><strong>Парсер</strong> <span id="home-parser-activity" class="home-activity">
+  <span id="home-activity-icon" aria-hidden="true">○</span>
+  <span id="home-activity-text" role="status">Статус недоступен</span>
+</span></p>
 <p id="home-status" role="status">Загрузка…</p>
 <div id="home-profiles"></div>
 <div class="home-legend">
@@ -49,9 +62,29 @@
   const endpoint = {{ url_for('.home_data') | tojson }};
   const profiles = document.getElementById('home-profiles');
   const status = document.getElementById('home-status');
+  const activityNode = document.getElementById('home-parser-activity');
+  const activityIcon = document.getElementById('home-activity-icon');
+  const activityText = document.getElementById('home-activity-text');
+  const activityIcons = {
+    starting: 'glyphicon-off',
+    waiting_auth: 'glyphicon-lock',
+    sleeping: 'glyphicon-time',
+    profile: 'glyphicon-user',
+    download: 'glyphicon-download-alt',
+  };
   const dialog = document.getElementById('home-stories');
   const storyList = document.getElementById('home-story-list');
   const rows = new Map();
+  const moscowTime = new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const moscowDate = new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    day: 'numeric',
+    month: 'long',
+  });
   const labels = {
     sent: 'Отправлено',
     ready: 'Ожидает отправки',
@@ -65,6 +98,7 @@
   };
   let openProfile = null;
   let storySignature = '';
+  let activitySignature = '';
 
   function element(tag, className, value = '') {
     const node = document.createElement(tag);
@@ -73,20 +107,62 @@
     return node;
   }
 
-  function dot(item) {
-    const url = /^https?:\/\/(?:www\.)?instagram\.com\/(?:[\w.]+\/)?(?:p|reel|stories)\//i.test(item.label)
-      ? item.label : null;
-    const node = element(url ? 'a' : 'span', 'home-dot home-' + item.status);
-    node.title = labels[item.status] + ' · ' + item.label;
-    if (url) {
-      node.href = url;
-      node.target = '_blank';
-      node.rel = 'noopener noreferrer';
-    } else {
-      node.setAttribute('role', 'img');
+  function instagramLink(url, className, label = '') {
+    if (!/^https?:\/\/(?:www\.)?instagram\.com\/(?:[\w.]+\/)?(?:p|reel|stories)\//i.test(url)) {
+      return element('span', className, label);
     }
+    const node = element('a', className, label);
+    node.href = url;
+    node.target = '_blank';
+    node.rel = 'noopener noreferrer';
+    return node;
+  }
+
+  function dot(item) {
+    const node = instagramLink(item.label, 'home-dot home-' + item.status);
+    node.title = labels[item.status] + ' · ' + item.label;
+    if (node.tagName === 'SPAN') node.setAttribute('role', 'img');
     node.setAttribute('aria-label', node.title);
     return node;
+  }
+
+  function renderActivity(activity) {
+    const signature = JSON.stringify(activity);
+    if (signature === activitySignature) return;
+    activitySignature = signature;
+    const icon = activityIcons[activity?.state];
+    activityNode.dataset.state = icon ? activity.state : '';
+    activityIcon.className = icon ? 'glyphicon ' + icon : '';
+    activityIcon.textContent = icon ? '' : '○';
+    switch (activity?.state) {
+      case 'starting':
+        activityText.textContent = 'Запускаемся';
+        break;
+      case 'waiting_auth':
+        activityText.textContent = 'Ожидаем авторизации Instagram';
+        break;
+      case 'sleeping': {
+        if (!Number.isFinite(activity.until)) {
+          activityText.textContent = 'Спим';
+          break;
+        }
+        const until = new Date(activity.until * 1000);
+        const date = moscowDate.format(until);
+        const day = date === moscowDate.format(new Date()) ? '' : date + ', ';
+        activityText.textContent = 'Спим до ' + day + moscowTime.format(until) + ' МСК';
+        break;
+      }
+      case 'profile':
+        activityText.textContent = 'Актуализируем профиль @' + activity.username;
+        break;
+      case 'download': {
+        const label = { post: 'пост', reel: 'рилс', story: 'сторис' }[activity.media_type] || 'медиа';
+        activityText.replaceChildren('Скачиваем ', instagramLink(activity.url, '', label), ' от @' + activity.username);
+        break;
+      }
+      default:
+        activityText.textContent = 'Статус недоступен';
+    }
   }
 
   function elapsed(seconds) {
@@ -185,7 +261,9 @@
     try {
       const response = await fetch(endpoint, { cache: 'no-store' });
       if (!response.ok || response.redirected) throw new Error('Home request failed');
-      render(await response.json());
+      const data = await response.json();
+      renderActivity(data.parser_activity);
+      render(data.profiles);
     } catch (error) {
       if (!rows.size) {
         status.hidden = false;

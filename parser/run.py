@@ -14,6 +14,7 @@ from app_parser.autentefication.cooke import load_cookies, save_cookies
 from app_parser.autentefication.login import check_login
 from app_parser.driver import driver_manager
 from app_parser.parser import InstagramParser
+from app_parser.utils.activity import set_activity
 
 AUTH_DONE_FILE = "/content/.auth_done"
 FORCE_AUTH_FILE = "/content/.force_auth"
@@ -42,6 +43,7 @@ def interruptible_sleep(total_seconds: int) -> bool:
     """Спит с проверкой флага /force_auth каждые 30 сек.
     Возвращает True если сон был прерван командой."""
     deadline = time.time() + total_seconds
+    set_activity("sleeping", until=deadline)
     while time.time() < deadline:
         if os.path.exists(FORCE_AUTH_FILE):
             os.remove(FORCE_AUTH_FILE)
@@ -83,6 +85,7 @@ def try_cookie_login(debug: bool) -> bool:
 
 
 def wait_for_manual_auth(server_url: str, reason: str = f"Авторизация Instagram провалилась {MAX_AUTH_FAILURES} раз подряд."):
+    set_activity("waiting_auth")
     if os.path.exists(AUTH_DONE_FILE):
         os.remove(AUTH_DONE_FILE)
 
@@ -120,6 +123,7 @@ def main():
 
     consecutive_auth_failures = 0
 
+    set_activity("starting")
     if try_cookie_login(debug):
         logger.info("Валидные cookies найдены, ручная авторизация через VNC не требуется")
     else:
@@ -128,6 +132,7 @@ def main():
 
     while True:
         try:
+            set_activity("starting")
             with InstagramParser(limit=10, debug=debug) as parser:
                 consecutive_auth_failures = 0
                 posts = get_posts(is_downloaded=False)

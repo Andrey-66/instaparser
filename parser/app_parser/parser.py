@@ -15,6 +15,7 @@ from app_parser.download.instaloader_download import instaloader_download
 from app_parser.download.iqsaved_download import post_iqsaved_download, story_iqsaved_download
 from app_parser.download.selenium_download import selenium_download, selenium_story_download
 from app_parser.driver import driver_manager
+from app_parser.utils.activity import set_activity
 from app_parser.utils.files import delete_directory
 from app_parser.utils.media_check import folder_has_silent_video
 from app_parser.utils.selenium_utils import open_page
@@ -52,6 +53,7 @@ class InstagramParser:
         """Парсит посты профиля"""
         total = len(profiles_names)
         for i, profile_name in enumerate(profiles_names, 1):
+            set_activity("profile", username=profile_name)
             try:
                 logger.info(f"[{i}/{total}] Парсинг профиля @{profile_name}")
                 profile = get_profile(profile_name)
@@ -256,12 +258,14 @@ class InstagramParser:
         for i, post in enumerate(posts, 1):
             sleep_minutes = uniform(60, 240)
             logger.info(f"[{i}/{total}] Скачивание поста: {post.get('instagram_post_id')} | Sleep {sleep_minutes / 60:.1f} min")
+            set_activity("sleeping", until=time.time() + sleep_minutes)
             time.sleep(sleep_minutes)
             url = post.get('instagram_post_id')
             author_name = post.get('profile_username')
             errors_count = post.get('errors_count')
             media_type = post.get('media_type')
             username = post.get('profile_username')
+            set_activity("download", media_type=media_type, url=url, username=username)
             if not url.endswith("/"):
                 url += "/"
             if media_type == 'story':

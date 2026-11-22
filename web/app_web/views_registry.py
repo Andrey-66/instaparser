@@ -1,12 +1,24 @@
-from flask_admin import AdminIndexView, expose
+import json
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from flask import jsonify, redirect, request, url_for
+from flask_admin import AdminIndexView, expose
 from flask_login import current_user
 from sqlalchemy import and_, func, or_, select
 
 from .db import database
 from .models import Post, Profile, Subscription, TelegramUser
+
+PARSER_STATUS_FILE = Path("/content/.parser_status.json")
+
+
+def parser_activity():
+    try:
+        activity = json.loads(PARSER_STATUS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return activity if isinstance(activity, dict) else None
 
 
 def media_status(post):
@@ -71,7 +83,7 @@ class SecureAdminIndexView(AdminIndexView):
                     "label": post.instagram_post_id,
                 })
 
-        response = jsonify(list(rows.values()))
+        response = jsonify(profiles=list(rows.values()), parser_activity=parser_activity())
         response.headers["Cache-Control"] = "no-store"
         return response
 
