@@ -20,3 +20,16 @@ def get_telegram_user(telegram_id):
         logger.error(f'Error getting telegram_user {telegram_id}: {user.status_code}')
         return {}
     return user.json()
+
+
+def update_telegram_username(telegram_id, username, token):
+    try:
+        response = requests.put(
+            f'{URL}/api/telegram-users/{telegram_id}/username',
+            json={'username': username},
+            headers={'Authorization': f'Bearer {token}'},
+            timeout=5,
+        )
+        response.raise_for_status()
+    except requests.RequestException:
+        logger.warning('Could not sync username for Telegram user %s', telegram_id)

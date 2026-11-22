@@ -1,0 +1,202 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<style>
+  #home-profiles { display: grid; gap: 10px; }
+  .home-profile { display: flex; flex-wrap: wrap; justify-content: space-between;
+    gap: 12px 24px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; }
+  .home-profile-name { font-weight: bold; overflow-wrap: anywhere; }
+  .home-subscribers, .home-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+  .home-subscribers { margin-top: 5px; }
+  .home-subscriber { padding: 1px 8px; background: #eef2f5; border-radius: 12px; }
+  .home-media { display: grid; gap: 4px; }
+  .home-media-row { display: grid; grid-template-columns: 20px repeat(10, 24px);
+    align-items: center; justify-items: center; }
+  .home-dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; }
+  a.home-dot:hover, a.home-dot:focus-visible { outline: 2px solid #333; outline-offset: 2px; }
+  .home-sent { background: #26834c; }
+  .home-ready { background: #2677bc; }
+  .home-pending { background: #e4ad13; }
+  .home-error { background: #cf3f43; }
+  .home-more { font-size: 11px; padding: 0 2px; }
+  .home-legend { margin-top: 16px; }
+  .home-legend .home-dot, #home-story-list .home-dot { margin-right: 5px; }
+  #home-stories { width: min(92vw, 580px); max-height: 80vh; border: 1px solid #ddd; border-radius: 6px; }
+  #home-stories::backdrop { background: #0006; }
+  #home-story-list { padding-left: 22px; overflow-wrap: anywhere; }
+  @media (max-width: 420px) {
+    .home-media-row { grid-template-columns: 18px repeat(10, 19px); }
+  }
+</style>
+
+<h2>Профили</h2>
+<p id="home-status" role="status">Загрузка…</p>
+<div id="home-profiles"></div>
+<div class="home-legend">
+  <span><i class="home-dot home-sent"></i>Отправлено</span>
+  <span><i class="home-dot home-ready"></i>Ожидает отправки</span>
+  <span><i class="home-dot home-pending"></i>Ожидает скачивания</span>
+  <span><i class="home-dot home-error"></i>Ошибка скачивания</span>
+</div>
+<dialog id="home-stories" aria-labelledby="home-story-title">
+  <form method="dialog"><button class="close" aria-label="Закрыть">×</button></form>
+  <h3 id="home-story-title"></h3>
+  <ol id="home-story-list"></ol>
+</dialog>
+
+<script>
+(() => {
+  const endpoint = {{ url_for('.home_data') | tojson }};
+  const profiles = document.getElementById('home-profiles');
+  const status = document.getElementById('home-status');
+  const dialog = document.getElementById('home-stories');
+  const storyList = document.getElementById('home-story-list');
+  const rows = new Map();
+  const labels = {
+    sent: 'Отправлено',
+    ready: 'Ожидает отправки',
+    pending: 'Ожидает скачивания',
+    error: 'Ошибка скачивания',
+  };
+  const media = {
+    post: ['▧', 'Посты'],
+    reel: ['▶', 'Рилсы'],
+    story: ['◷', 'Сторис'],
+  };
+  let openProfile = null;
+  let storySignature = '';
+
+  function element(tag, className, value = '') {
+    const node = document.createElement(tag);
+    node.className = className;
+    node.textContent = value;
+    return node;
+  }
+
+  function dot(item) {
+    const url = /^https?:\/\/(?:www\.)?instagram\.com\/(?:[\w.]+\/)?(?:p|reel|stories)\//i.test(item.label)
+      ? item.label : null;
+    const node = element(url ? 'a' : 'span', 'home-dot home-' + item.status);
+    node.title = labels[item.status] + ' · ' + item.label;
+    if (url) {
+      node.href = url;
+      node.target = '_blank';
+      node.rel = 'noopener noreferrer';
+    } else {
+      node.setAttribute('role', 'img');
+    }
+    node.setAttribute('aria-label', node.title);
+    return node;
+  }
+
+  function elapsed(seconds) {
+    if (seconds === null) return 'Ещё не проверялся';
+    if (seconds < 60) return 'Проверен меньше минуты назад';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return 'Проверен ' + minutes + ' мин назад';
+    if (minutes < 1440) return 'Проверен ' + Math.floor(minutes / 60) + ' ч назад';
+    return 'Проверен ' + Math.floor(minutes / 1440) + ' дн назад';
+  }
+
+  function renderStories(profile) {
+    const signature = JSON.stringify([profile.username, profile.story]);
+    if (signature === storySignature) return;
+    storySignature = signature;
+    document.getElementById('home-story-title').textContent = 'Сторис @' + profile.username + ' за 24 часа';
+    storyList.replaceChildren(...profile.story.map(item => {
+      const entry = element('li', '');
+      entry.append(dot(item), labels[item.status] + ' · ' + item.label);
+      return entry;
+    }));
+  }
+
+  function updateRow(profile, row) {
+    const age = elapsed(profile.checked_seconds);
+    if (row.age.textContent !== age) row.age.textContent = age;
+    const signature = JSON.stringify([
+      profile.username, profile.subscribers, profile.post, profile.reel,
+      profile.story.slice(0, 10), profile.story.length,
+    ]);
+    if (row.signature === signature) return;
+    row.signature = signature;
+    row.name.textContent = '@' + profile.username;
+    row.subscribers.replaceChildren(...profile.subscribers.map(name => element('span', 'home-subscriber', name)));
+    row.media.replaceChildren(...Object.entries(media).filter(([type]) => profile[type].length).map(([type, [icon, label]]) => {
+      const line = element('div', 'home-media-row');
+      const heading = element('span', '', icon);
+      heading.title = label;
+      heading.setAttribute('role', 'img');
+      heading.setAttribute('aria-label', label);
+      const items = profile[type];
+      const overflow = items.length > 10;
+      line.append(heading, ...items.slice(0, overflow ? 9 : 10).map(dot));
+      if (overflow) {
+        const more = element('button', 'btn btn-default home-more', '+' + (items.length - 9));
+        more.type = 'button';
+        more.setAttribute('aria-label', 'Все сторис за 24 часа');
+        more.addEventListener('click', () => {
+          openProfile = profile.id;
+          renderStories(row.profile);
+          dialog.showModal();
+        });
+        line.append(more);
+      }
+      return line;
+    }));
+  }
+
+  function render(data) {
+    const seen = new Set();
+    data.forEach((profile, index) => {
+      seen.add(profile.id);
+      let row = rows.get(profile.id);
+      if (!row) {
+        row = {
+          node: element('section', 'home-profile'),
+          name: element('div', 'home-profile-name'),
+          age: element('div', 'text-muted'),
+          subscribers: element('div', 'home-subscribers'),
+          media: element('div', 'home-media'),
+        };
+        const info = element('div', '');
+        info.append(row.name, row.age, row.subscribers);
+        row.node.append(info, row.media);
+        rows.set(profile.id, row);
+      }
+      row.profile = profile;
+      updateRow(profile, row);
+      if (profiles.children[index] !== row.node) {
+        profiles.insertBefore(row.node, profiles.children[index] || null);
+      }
+      if (dialog.open && openProfile === profile.id) renderStories(profile);
+    });
+    for (const [id, row] of rows) {
+      if (!seen.has(id)) {
+        if (dialog.open && id === openProfile) dialog.close();
+        row.node.remove();
+        rows.delete(id);
+      }
+    }
+    status.hidden = data.length > 0;
+    if (!data.length) status.textContent = 'Профилей пока нет.';
+  }
+
+  async function refresh() {
+    try {
+      const response = await fetch(endpoint, { cache: 'no-store' });
+      if (!response.ok || response.redirected) throw new Error('Home request failed');
+      render(await response.json());
+    } catch (error) {
+      if (!rows.size) {
+        status.hidden = false;
+        status.textContent = 'Не удалось загрузить профили. Повторим автоматически.';
+      }
+    } finally {
+      window.setTimeout(refresh, 5000);
+    }
+  }
+
+  refresh();
+})();
+</script>
+{% endblock %}

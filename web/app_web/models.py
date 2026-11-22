@@ -52,6 +52,7 @@ class Subscription(database.Model):
 class TelegramUser(database.Model):
     id = database.Column(database.Integer, primary_key=True)
     telegram_id = database.Column(database.String(255), unique=True, nullable=False)
+    username = database.Column(database.String(32))
     is_active = database.Column(database.Boolean, default=False, nullable=False)
     created_at = database.Column(database.DateTime, default=datetime.utcnow)
 
