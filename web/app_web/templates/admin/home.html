@@ -5,7 +5,12 @@
   #home-profiles { display: grid; gap: 10px; }
   .home-profile { display: flex; flex-wrap: wrap; justify-content: space-between;
     gap: 12px 24px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; }
-  .home-profile-name { font-weight: bold; overflow-wrap: anywhere; }
+  .home-profile-name { display: inline; font-weight: bold; overflow-wrap: anywhere; }
+  .home-profile-progress { display: inline-block; width: 20px; color: #667085; }
+  .home-profile[data-progress="checked"] .home-profile-progress { color: #26834c; }
+  .home-profile[data-progress="active"] { border-color: #2677bc; background: #f2f7ff; }
+  .home-profile[data-progress="active"] .home-profile-progress { color: #245cab; }
+  .home-downloading { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #245cab; }
   .home-subscribers, .home-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; }
   .home-subscribers { margin-top: 5px; }
   .home-subscriber { padding: 1px 8px; background: #eef2f5; border-radius: 12px; }
@@ -120,9 +125,13 @@
     return node;
   }
 
-  function dot(item) {
+  function dot(item, downloadUrl) {
     const node = instagramLink(item.label, 'home-dot home-' + item.status);
     node.title = labels[item.status] + ' · ' + item.label;
+    if (item.label === downloadUrl) {
+      node.classList.add('home-downloading');
+      node.title = 'Скачиваем · ' + item.label;
+    }
     if (node.tagName === 'SPAN') node.setAttribute('role', 'img');
     node.setAttribute('aria-label', node.title);
     return node;
@@ -178,14 +187,15 @@
     return 'Проверен ' + Math.floor(minutes / 1440) + ' дн назад';
   }
 
-  function renderStories(profile) {
-    const signature = JSON.stringify([profile.username, profile.story]);
+  function renderStories(profile, download) {
+    const downloadUrl = download?.media_type === 'story' ? download.url : null;
+    const signature = JSON.stringify([profile.username, profile.story, downloadUrl]);
     if (signature === storySignature) return;
     storySignature = signature;
     document.getElementById('home-story-title').textContent = 'Сторис @' + profile.username + ' за 24 часа';
     storyList.replaceChildren(...profile.story.map(item => {
       const entry = element('li', '');
-      entry.append(dot(item), labels[item.status] + ' · ' + item.label);
+      entry.append(dot(item, downloadUrl), labels[item.status] + ' · ' + item.label);
       return entry;
     }));
   }
@@ -195,7 +205,8 @@
     if (row.age.textContent !== age) row.age.textContent = age;
     const signature = JSON.stringify([
       profile.username, profile.subscribers, profile.post, profile.reel,
-      profile.story.slice(0, 10), profile.story.length,
+      profile.story.slice(0, 10), profile.story.length, row.download,
+      profile.story.some(item => item.label === row.download?.url),
     ]);
     if (row.signature === signature) return;
     row.signature = signature;
@@ -209,14 +220,21 @@
       heading.setAttribute('aria-label', label);
       const items = profile[type];
       const overflow = items.length > 10;
-      line.append(heading, ...items.slice(0, overflow ? 9 : 10).map(dot));
+      const downloadUrl = row.download?.media_type === type ? row.download.url : null;
+      const visibleCount = overflow ? 9 : 10;
+      line.append(heading, ...items.slice(0, visibleCount).map(item => dot(item, downloadUrl)));
       if (overflow) {
         const more = element('button', 'btn btn-default home-more', '+' + (items.length - 9));
         more.type = 'button';
         more.setAttribute('aria-label', 'Все сторис за 24 часа');
+        if (items.slice(visibleCount).some(item => item.label === downloadUrl)) {
+          more.classList.add('home-downloading');
+          more.title = 'В списке есть сторис, которая сейчас скачивается';
+          more.setAttribute('aria-label', 'Все сторис за 24 часа. Одна из скрытых сторис скачивается.');
+        }
         more.addEventListener('click', () => {
           openProfile = profile.id;
-          renderStories(row.profile);
+          renderStories(row.profile, row.download);
           dialog.showModal();
         });
         line.append(more);
@@ -225,8 +243,10 @@
     }));
   }
 
-  function render(data) {
+  function render(data, activity) {
     const seen = new Set();
+    const checked = new Set(activity?.checked_profiles?.map(name => name.toLowerCase()));
+    const current = activity?.username?.toLowerCase();
     data.forEach((profile, index) => {
       seen.add(profile.id);
       let row = rows.get(profile.id);
@@ -234,21 +254,42 @@
         row = {
           node: element('section', 'home-profile'),
           name: element('div', 'home-profile-name'),
+          progress: element('span', 'home-profile-progress'),
           age: element('div', 'text-muted'),
           subscribers: element('div', 'home-subscribers'),
           media: element('div', 'home-media'),
         };
         const info = element('div', '');
-        info.append(row.name, row.age, row.subscribers);
+        const heading = element('div', '');
+        heading.append(row.progress, row.name);
+        info.append(heading, row.age, row.subscribers);
         row.node.append(info, row.media);
         rows.set(profile.id, row);
       }
       row.profile = profile;
+      const username = profile.username.toLowerCase();
+      const active = username === current && ['profile', 'download'].includes(activity?.state);
+      const done = checked.has(username);
+      row.download = active && activity.state === 'download'
+        ? { media_type: activity.media_type, url: activity.url } : null;
+      const progress = active ? 'active' : done ? 'checked' : 'pending';
+      const currentAction = active ? activity.state : '';
+      if (row.node.dataset.progress !== progress || row.progress.dataset.activity !== currentAction) {
+        row.node.dataset.progress = progress;
+        row.progress.dataset.activity = currentAction;
+        const icon = active ? activityIcons[activity.state] : done ? 'glyphicon-ok' : 'glyphicon-time';
+        const label = active ? 'Парсер сейчас работает с этим профилем'
+          : done ? 'Проверен в этой итерации' : 'Ещё не проверен в этой итерации';
+        row.progress.className = 'home-profile-progress glyphicon ' + icon;
+        row.progress.title = label;
+        row.progress.setAttribute('role', 'img');
+        row.progress.setAttribute('aria-label', label);
+      }
       updateRow(profile, row);
       if (profiles.children[index] !== row.node) {
         profiles.insertBefore(row.node, profiles.children[index] || null);
       }
-      if (dialog.open && openProfile === profile.id) renderStories(profile);
+      if (dialog.open && openProfile === profile.id) renderStories(profile, row.download);
     });
     for (const [id, row] of rows) {
       if (!seen.has(id)) {
@@ -267,7 +308,7 @@
       if (!response.ok || response.redirected) throw new Error('Home request failed');
       const data = await response.json();
       renderActivity(data.parser_activity);
-      render(data.profiles);
+      render(data.profiles, data.parser_activity);
     } catch (error) {
       if (!rows.size) {
         status.hidden = false;
