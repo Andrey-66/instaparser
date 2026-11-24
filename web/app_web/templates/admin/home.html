@@ -23,10 +23,11 @@
   .home-activity { display: inline-flex; align-items: baseline; gap: 6px;
     margin-left: 5px; padding: 4px 10px; border-radius: 14px;
     background: #eef1f4; color: #475467; }
-  .home-activity[data-state="sleeping"] { background: #eaf1fb; color: #244871; }
+  .home-activity[data-state="sleeping"] { background: #203657; color: #f1f5ff; }
+  .home-activity[data-state="pause"] { background: #eaf1fb; color: #244871; }
   .home-activity[data-state="profile"] { background: #e0f3ed; color: #185b47; }
-  .home-activity[data-state="download"] { background: #e8efff; color: #244b91; }
-  .home-activity[data-state="starting"] { background: #efeafa; color: #584084; }
+  .home-activity[data-state="download"] { background: #efeafa; color: #584084; }
+  .home-activity[data-state="starting"] { background: #ffdf76; color: #614700; }
   .home-activity[data-state="waiting_auth"] { background: #fff1ce; color: #744800; }
   .home-activity a { color: inherit; text-decoration: underline; }
   .home-legend .home-dot, #home-story-list .home-dot { margin-right: 5px; }
@@ -68,7 +69,8 @@
   const activityIcons = {
     starting: 'glyphicon-off',
     waiting_auth: 'glyphicon-lock',
-    sleeping: 'glyphicon-time',
+    sleeping: 'moon',
+    pause: 'glyphicon-time',
     profile: 'glyphicon-user',
     download: 'glyphicon-download-alt',
   };
@@ -132,8 +134,8 @@
     activitySignature = signature;
     const icon = activityIcons[activity?.state];
     activityNode.dataset.state = icon ? activity.state : '';
-    activityIcon.className = icon ? 'glyphicon ' + icon : '';
-    activityIcon.textContent = icon ? '' : '○';
+    activityIcon.className = icon && icon !== 'moon' ? 'glyphicon ' + icon : '';
+    activityIcon.textContent = icon === 'moon' ? '☾' : icon ? '' : '○';
     switch (activity?.state) {
       case 'starting':
         activityText.textContent = 'Запускаемся';
@@ -141,15 +143,17 @@
       case 'waiting_auth':
         activityText.textContent = 'Ожидаем авторизации Instagram';
         break;
-      case 'sleeping': {
+      case 'sleeping':
+      case 'pause': {
+        const label = activity.state === 'sleeping' ? 'Спим' : 'Пауза';
         if (!Number.isFinite(activity.until)) {
-          activityText.textContent = 'Спим';
+          activityText.textContent = label;
           break;
         }
         const until = new Date(activity.until * 1000);
         const date = moscowDate.format(until);
         const day = date === moscowDate.format(new Date()) ? '' : date + ', ';
-        activityText.textContent = 'Спим до ' + day + moscowTime.format(until) + ' МСК';
+        activityText.textContent = label + ' до ' + day + moscowTime.format(until) + ' МСК';
         break;
       }
       case 'profile':

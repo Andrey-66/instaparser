@@ -92,6 +92,11 @@ class InstagramParser:
                     )
                 update_profile(profile_name, errors_count=0)
                 for story in stories:
+                    story_owner = re.fullmatch(
+                        r'https://www\.instagram\.com/stories/([^/]+)/[0-9]+/?(?:[?#].*)?', story
+                    )
+                    if not story_owner or story_owner[1].casefold() != profile_name.casefold():
+                        continue
                     if story in existed_posts_ids:
                         continue
                     create_post(
@@ -258,7 +263,7 @@ class InstagramParser:
         for i, post in enumerate(posts, 1):
             sleep_minutes = uniform(60, 240)
             logger.info(f"[{i}/{total}] Скачивание поста: {post.get('instagram_post_id')} | Sleep {sleep_minutes / 60:.1f} min")
-            set_activity("sleeping", until=time.time() + sleep_minutes)
+            set_activity("pause", until=time.time() + sleep_minutes)
             time.sleep(sleep_minutes)
             url = post.get('instagram_post_id')
             author_name = post.get('profile_username')
