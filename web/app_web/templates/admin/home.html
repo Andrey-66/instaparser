@@ -82,7 +82,6 @@
   const dialog = document.getElementById('home-stories');
   const storyList = document.getElementById('home-story-list');
   const rows = new Map();
-  const recentCheckSeconds = 2 * 60 * 60;
   const moscowTime = new Intl.DateTimeFormat('ru-RU', {
     timeZone: 'Europe/Moscow',
     hour: '2-digit',
@@ -246,6 +245,7 @@
 
   function render(data, activity) {
     const seen = new Set();
+    const checked = new Set(activity?.checked_profiles?.map(name => name.toLowerCase()));
     const current = activity?.username?.toLowerCase();
     data.forEach((profile, index) => {
       seen.add(profile.id);
@@ -269,7 +269,7 @@
       row.profile = profile;
       const username = profile.username.toLowerCase();
       const active = username === current && ['profile', 'download'].includes(activity?.state);
-      const done = profile.checked_seconds !== null && profile.checked_seconds < recentCheckSeconds;
+      const done = checked.has(username);
       row.download = active && activity.state === 'download'
         ? { media_type: activity.media_type, url: activity.url } : null;
       const progress = active ? 'active' : done ? 'checked' : 'pending';
@@ -279,7 +279,7 @@
         row.progress.dataset.activity = currentAction;
         const icon = active ? activityIcons[activity.state] : done ? 'glyphicon-ok' : 'glyphicon-time';
         const label = active ? 'Парсер сейчас работает с этим профилем'
-          : done ? 'Проверен за последние два часа' : 'Нет проверки за последние два часа';
+          : done ? 'Проверен в этой итерации' : 'Ещё не проверен в этой итерации';
         row.progress.className = 'home-profile-progress glyphicon ' + icon;
         row.progress.title = label;
         row.progress.setAttribute('role', 'img');

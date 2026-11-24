@@ -7,12 +7,14 @@ from pathlib import Path
 
 STATUS_FILE = Path("/content/.parser_status.json")
 logger = logging.getLogger(__name__)
+checked_profiles = set()
 
 
 def set_activity(state, **details):
     temporary = STATUS_FILE.with_suffix(".tmp")
     try:
-        temporary.write_text(json.dumps({"state": state, **details}), encoding="utf-8")
+        activity = {"state": state, "checked_profiles": sorted(checked_profiles), **details}
+        temporary.write_text(json.dumps(activity), encoding="utf-8")
         os.replace(temporary, STATUS_FILE)
     except OSError as error:
         logger.warning("Could not publish parser activity: %s", error)
