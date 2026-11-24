@@ -15,7 +15,7 @@ from app_parser.download.instaloader_download import instaloader_download
 from app_parser.download.iqsaved_download import post_iqsaved_download, story_iqsaved_download
 from app_parser.download.selenium_download import selenium_download, selenium_story_download
 from app_parser.driver import driver_manager
-from app_parser.utils.activity import checked_profiles, set_activity
+from app_parser.utils.activity import set_activity
 from app_parser.utils.files import delete_directory
 from app_parser.utils.media_check import folder_has_silent_video
 from app_parser.utils.selenium_utils import open_page
@@ -68,7 +68,6 @@ class InstagramParser:
                 if not update_profile(profile_name, last_parsed=datetime.now().isoformat()):
                     raise
                 if not posts and not reels and not stories:
-                    checked_profiles.add(profile_name)
                     new_errors_count = profile.get('errors_count') + 1
                     update_profile(profile_name, errors_count=new_errors_count)
                     logger.warning(f"@{profile_name}: 0 постов, рилсов и сторис — ошибка {new_errors_count}")
@@ -105,7 +104,6 @@ class InstagramParser:
                         profile_id=profile.get('id'),
                         media_type='story',
                     )
-                checked_profiles.add(profile_name)
             except DRIVER_ERRORS as e:
                 logger.warning(f'[{i}/{total}] Driver error for @{profile_name}, restarting: {e}')
                 if self.driver:

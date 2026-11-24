@@ -14,7 +14,7 @@ from app_parser.autentefication.cooke import load_cookies, save_cookies
 from app_parser.autentefication.login import check_login
 from app_parser.driver import driver_manager
 from app_parser.parser import InstagramParser
-from app_parser.utils.activity import checked_profiles, set_activity
+from app_parser.utils.activity import set_activity
 
 AUTH_DONE_FILE = "/content/.auth_done"
 FORCE_AUTH_FILE = "/content/.force_auth"
@@ -132,7 +132,6 @@ def main():
 
     while True:
         try:
-            checked_profiles.clear()
             set_activity("starting")
             with InstagramParser(limit=10, debug=debug) as parser:
                 consecutive_auth_failures = 0
